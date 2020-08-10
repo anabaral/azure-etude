@@ -180,6 +180,38 @@ Processing triggers for ureadahead (0.100.0-21) ...
 ```
 서비스 시작은 수동으로 해야 하나봄. 뭐 배스천에서는 이미지 빌드만 하게 될테니까..
 
+## 클러스터 업그레이드
+
+다음과 같이 업그레이드 가능 버전을 확인.
+```
+$ az aks get-upgrades --resource-group 04226 --name myAKSCluster --output table
+Name     ResourceGroup    MasterVersion    Upgrades
+-------  ---------------  ---------------  ----------------
+default  04226            1.16.13           1.17.7, 1.17.9
+```
+업그레이드가 불가할 경우에는 에러가 난다고..
+
+업그레이드는 이렇게 함.
+```
+$ az aks upgrade --resource-group 04226 --name myAKSCluster --kubernetes-version 1.17.7
+- Running..
+<클러스터 정보 출력>
+
+$ az aks get-upgrades --resource-group 04226 --name myAKSCluster --output table   Name     ResourceGroup    MasterVersion    Upgrades
+-------  ---------------  ---------------  ----------------------------------------
+default  04226            1.17.7           1.17.9, 1.18.4(preview), 1.18.6(preview)
+```
+실제 해 보니 클러스터를 새로 생성하는 것보다 업그레이드가 (생성 직후에 하는 건데도) 훨씬 오래 걸림. (생성할 때 3분, 업그레이드 10분 초과)
+
+한편 위와 보이듯이 현재 버전에 따라서 업그레이드 가능 버전이 다름.
+
+이미 알고 있을 수 있지만 현재 버전 확인하는 방법은 이것도 있음
+```
+$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"18", GitVersion:"v1.18.6", GitCommit:"dff82dc0de47299ab66c83c626e08b245ab19037", GitTreeState:"clean", BuildDate:"2020-07-15T16:58:53Z", GoVersion:"go1.13.9", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"17", GitVersion:"v1.17.7", GitCommit:"5737fe2e0b8e92698351a853b0d07f9c39b96736", GitTreeState:"clean", BuildDate:"2020-06-24T19:54:11Z", GoVersion:"go1.13.6", Compiler:"gc", Platform:"linux/amd64"}
+```
+
 ## 클러스터 삭제
 ```
 $ az aks delete --resource-group 04226 --name myAKSCluster 
