@@ -323,5 +323,13 @@ test-bastion-1-ip  04226            koreacentral           52.231.31.197  IPv4  
 AKS 에서 ingress 만들때마다 수동으로 매핑해 줘야 하나 싶기도 하고.. 수동으로 매핑은 또 어떻게 하지?
 
 
+## 제거
+
+일단 오래토록 잡고 있을 수 없으니 일단 제거함.
+```
+$ az network application-gateway delete -g 04226 -n myAG
+```
+vnet 이나 subnet은 cpu/memory/disk 자원을 점유하는 게 아니므로 AWS에서는 과금 대상이 아니었기에 일단 지우지 않고 놔 두어 봄.
+
 
 
