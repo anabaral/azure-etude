@@ -297,6 +297,7 @@ Deployment failed. Correlation ID: d644dbf7-dfdb-48e7-bc61-3036e7fb1ba5. {
 ```
 
 혹시 subnet은 불필요하지 않을까 싶어 vnet만 만들고 거기 속하는 subnet을 만들지 않은 채로 생성하려 하면 다음 에러가 나옴.
+```
 $ az network application-gateway create -g 04226 -n myAG --vnet-name 04226-ag-vnet
 Deployment failed. Correlation ID: 2e963bf5-564f-4f74-b819-1ccb0b9e30ba. {
   "error": {
@@ -305,6 +306,7 @@ Deployment failed. Correlation ID: 2e963bf5-564f-4f74-b819-1ccb0b9e30ba. {
     "details": []
   }
 }
+```
 
 ## 비고
 
