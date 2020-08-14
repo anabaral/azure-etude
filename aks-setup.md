@@ -212,6 +212,28 @@ Client Version: version.Info{Major:"1", Minor:"18", GitVersion:"v1.18.6", GitCom
 Server Version: version.Info{Major:"1", Minor:"17", GitVersion:"v1.17.7", GitCommit:"5737fe2e0b8e92698351a853b0d07f9c39b96736", GitTreeState:"clean", BuildDate:"2020-06-24T19:54:11Z", GoVersion:"go1.13.6", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
+## 클러스터 노드 개수 조정
+
+azure 클러스터는 노드풀 이란 걸 가지고 있는데, 이게 AWS에서의 스케일링 그룹과 비슷한 역할을 합니다.
+```
+$ az aks nodepool scale -g 04226 --cluster-name myAKS -n nodepool1
+...노드풀 정보 출력...
+```
+위에 노드 수를 명시하지 않았는데, 이럴 경우 기본값을 부여하는 것 같습니다. 여기서는 3개로 조정되었습니다.
+명시하고 싶으면 별도 옵션을 사용합니다.
+```
+$ az aks nodepool scale -g 04226 --cluster-name myAKS -n nodepool1 --node-count 1
+```
+노드 수를 0으로 줄 수는 없습니다. AWS에서는 가능했고 비용 절감 측면에서 기대했는데 불가하네요. 
+다만 노드 스케일이 AWS의 스케일링 그룹과 의미가 동일하지는 않으므로 다른 이 있는지도 모르겠습니다.
+```
+$ az aks nodepool scale -g 04226 --cluster-name myAKS -n nodepool1 --node-count 0
+Operation failed with status: 'Bad Request'. Details: The value of parameter agentPoolProfile.count is invalid. Please see https://aka.ms/aks-naming-rules for more details.
+$
+```
+
+
+
 ## 클러스터 삭제
 ```
 $ az aks delete --resource-group 04226 --name myAKSCluster 
