@@ -403,7 +403,8 @@ output "identity_client_id" {
 
 스토리지 계정 및 key1 값을 알아내어 아래에 적용
 ```
-az storage container create -n tfstate --account-name 04226diag --account-key <YourAzureStorageAccountKey>
+$ ACCOUNT_KEY=$(az storage account keys list --resource-group 04226 --account-name 04226diag --query [0].value -o tsv)
+$ az storage container create -n tfstate --account-name 04226diag --account-key $ACCOUNT_KEY
 {
   "created": true
 }
