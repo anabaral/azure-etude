@@ -447,9 +447,9 @@ location = "<Location of the Resource Group>"
 
 aks_service_principal_app_id = "<Service Principal AppId>"  # 만들어 놓은 AKS의 servicePrincipalProfile 속성에 적힌 것을 입력함
 
-aks_service_principal_client_secret = "<Service Principal Client Secret>"  # 만들어 놓은 AKS의 servicePrincipalProfile 속성에.. null이네? 빈간
+aks_service_principal_client_secret = "<Service Principal Client Secret>"  # 몰라서 빈간으로 했다가 에러가 나던데.. 나중에 구하는 방법을 알게됨
 
-aks_service_principal_object_id = "<Service Principal Object Id>"
+aks_service_principal_object_id = "<Service Principal Object Id>"     # 몰라서 빈간으로 했다가 에러가 나던데.. 나중에 구하는 방법을 알게됨
 ```
 
 ```
@@ -1084,6 +1084,140 @@ spec:
           serviceName: keycloak-http
           servicePort: 80
         path: /(.*)
+```
+
+근데 설치가 잘 안되네?
+```
+$ kubectl describe po -n mta-infra keycloak-0 | tail -3
+  Warning  FailedScheduling  51m (x10 over 63m)    default-scheduler  persistentvolumeclaim "keycloak-storage-data" not found
+  Warning  FailedScheduling  50m                   default-scheduler  persistentvolumeclaim "keycloak-storage-theme" not found
+  Warning  FailedScheduling  2m23s (x36 over 50m)  default-scheduler  pod has unbound immediate PersistentVolumeClaims
+
+$ kubectl describe pvc -n mta-infra data-keycloak-postgresql-0 | tail -2
+  Warning  ProvisioningFailed  60m                  persistentvolume-controller  Failed to provision volume with StorageClass "default": azure.BearerAuthorizer#WithAuthorization: Failed to refresh the Token for request to http://localhost:7788/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/mc_04226_myaks_koreacentral/providers/Microsoft.Compute/disks/kubernetes-dynamic-pvc-2d87ef96-cc44-4411-8e0f-8580d9da6a96?api-version=2018-09-30: StatusCode=401 -- Original Error: adal: Refresh request failed. Status Code = '401'. Response body: {"error":"invalid_client","error_description":"AADSTS7000215: Invalid client secret is provided.\r\nTrace ID: 35878c00-6057-4fc6-857e-660e2b811800\r\nCorrelation ID: 4224c6fc-ff5f-489f-b1ea-95f83e911935\r\nTimestamp: 2020-08-19 04:22:28Z","error_codes":[7000215],"timestamp":"2020-08-19 04:22:28Z","trace_id":"35878c00-6057-4fc6-857e-660e2b811800","correlation_id":"4224c6fc-ff5f-489f-b1ea-95f83e911935","error_uri":"https://login.microsoftonline.com/error?code=7000215"}
+  Warning  ProvisioningFailed  2m3s (x26 over 58m)  persistentvolume-controller  (combined from similar events): Failed to provision volume with StorageClass "default": azure.BearerAuthorizer#WithAuthorization: Failed to refresh the Token for request to http://localhost:7788/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/mc_04226_myaks_koreacentral/providers/Microsoft.Compute/disks/kubernetes-dynamic-pvc-2d87ef96-cc44-4411-8e0f-8580d9da6a96?api-version=2018-09-30: StatusCode=401 -- Original Error: adal: Refresh request failed. Status Code = '401'. Response body: {"error":"invalid_client","error_description":"AADSTS7000215: Invalid client secret is provided.\r\nTrace ID: 50a8d7a6-bbe9-42e4-99db-1b6368b73b00\r\nCorrelation ID: 4e77c0ee-2847-481b-b833-32ce85f3e367\r\nTimestamp: 2020-08-19 05:20:58Z","error_codes":[7000215],"timestamp":"2020-08-19 05:20:58Z","trace_id":"50a8d7a6-bbe9-42e4-99db-1b6368b73b00","correlation_id":"4e77c0ee-2847-481b-b833-32ce85f3e367","error_uri":"https://login.microsoftonline.com/error?code=7000215"}
+```
+
+이상해서 이것저것 뒤져봤는데 이걸 안했었던 것 같다.
+https://docs.microsoft.com/ko-kr/azure/aks/update-credentials#update-aks-cluster-with-new-service-principal-credentials
+```
+$ SP_ID=$(az aks show --resource-group 04226 --name myAKS --query servicePrincipalProfile.clientId -o tsv)
+$ az aks update-credentials --resource-group 04226 --name myAKS --reset-service-principal \
+   --service-principal $SP_ID --client-secret "$SP_SECRET"
+<별도 출력은 없음>
+$ kubectl get pvc        # Pending 상태였던 pvc가 잘 바운드 됨을 확인
+NAME                         STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+data-keycloak-postgresql-0   Bound    pvc-2d87ef96-cc44-4411-8e0f-8580d9da6a96   8Gi        RWO            default        73m
+keycloak-storage-data        Bound    pvc-77dc59f1-836c-423f-b1a0-7bd642dbcd5c   1Gi        RWO            default        28m
+keycloak-storage-theme       Bound    pvc-73bddc1a-ba51-41bd-a42c-9fd522fade25   1Gi        RWO            default        28m
+```
+위에서 $SP_SECRET 은 아까 구했던 값을  terraform.tfvars 파일에 적어두었으니 그걸 베끼면 된다. (다시 reset해서 구하면 값이 바뀌어 버리니..)
+
+
+근데 keycloak 하고 어떻게 연결하는 지 방법을 못찾겠네..?
+
+일단 처음 참조처에서 예제를 실행해 보자. 
+https://docs.microsoft.com/en-us/azure/developer/terraform/create-k8s-cluster-with-aks-applicationgateway-ingress#install-ingress-controller-helm-chart
+```
+# default namespace 에 설정하더라:
+$ kubectl create -f https://raw.githubusercontent.com/Azure/aad-pod-identity/master/deploy/infra/deployment-rbac.yaml
+serviceaccount/aad-pod-id-nmi-service-account created
+customresourcedefinition.apiextensions.k8s.io/azureassignedidentities.aadpodidentity.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/azureidentitybindings.aadpodidentity.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/azureidentities.aadpodidentity.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/azurepodidentityexceptions.aadpodidentity.k8s.io created
+clusterrole.rbac.authorization.k8s.io/aad-pod-id-nmi-role created
+clusterrolebinding.rbac.authorization.k8s.io/aad-pod-id-nmi-binding created
+daemonset.apps/nmi created
+serviceaccount/aad-pod-id-mic-service-account created
+clusterrole.rbac.authorization.k8s.io/aad-pod-id-mic-role created
+clusterrolebinding.rbac.authorization.k8s.io/aad-pod-id-mic-binding created
+deployment.apps/mic created
+```
+
+어? Azure AKS 용 ingress가 따로 있나?
+그럼 내가 깔았던 건 뭐지? ... 아무튼 현재는 AKS를 새로 깔았으니 무시하자.
+
+```
+$ helm repo add application-gateway-kubernetes-ingress https://appgwingress.blob.core.windows.net/ingress-azure-helm-package/
+$ helm repo update
+
+$ wget https://raw.githubusercontent.com/Azure/application-gateway-kubernetes-ingress/master/docs/examples/sample-helm-config.yaml -O helm-config.yaml
+$ vi helm-config.yaml
+<몇가지 수정하는데>
+<armAuth.type: aadPodIdentity 하고>
+$ echo "$(terraform output identity_resource_id)"  # for armAuth.identityResourceID
+/subscriptions/3a....d8-a75f-4611-8ca8-16......9283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1
+$ echo "$(terraform output identity_client_id)"    # for armAuth.identityClientID
+9......d-0055-4be7-826f-af3......2f4
+<그 외 선택사항 중 rbac.enabled: true>
+
+$ helm install -n default ag-ingress-controller -f helm-config.yaml application-gateway-kubernetes-ingress/ingress-azure
+NAME: ag-ingress-controller
+LAST DEPLOYED: Wed Aug 19 06:12:30 2020
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+Thank you for installing ingress-azure:1.2.0.
+
+Your release is named ag-ingress-controller.
+The controller is deployed in deployment ag-ingress-controller-ingress-azure.
+
+Configuration Details:
+----------------------
+ * AzureRM Authentication Method:
+    - Use AAD-Pod-Identity
+ * Application Gateway:
+    - Subscription ID : 3ac347d8-a75f-4611-8ca8-161a69189283
+    - Resource Group  : 2198
+    - Application Gateway Name : ApplicationGateway1
+ * Kubernetes Ingress Controller:
+    - Watching All Namespaces
+    - Verbosity level: 3
+
+Please make sure the associated aadpodidentity and aadpodidbinding is configured.
+For more information on AAD-Pod-Identity, please visit https://github.com/Azure/aad-pod-identity
+```
+
+설치는 되는데 정상작동 안하고 있음...?
+
+```
+$ kubectl get  po -n default -l release=ag-ingress-controller
+NAME                                                   READY   STATUS    RESTARTS   AGE
+ag-ingress-controller-ingress-azure-59c89485c8-gmp4k   0/1     Running   1          10m
+```
+
+다시 지우고 셋업 시도
+```
+$ az ad sp create-for-rbac   # 이런게 필요한가?
+Creating a role assignment under the scope of "/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283"
+  Retrying role assignment creation: 1/36
+{
+  "appId": "3e275120-e34a-4ee1-9451-d66ceb58336a",
+  "displayName": "azure-cli-2020-08-19-06-33-08",
+  "name": "http://azure-cli-2020-08-19-06-33-08",
+  "password": "NGZICkRfr6o5eK5O5~.G-92RqHMK3WykV6",
+  "tenant": "458503d6-ae80-47cb-bc1e-35ad3a0aa1f3"
+}
+# 조금 고생하고 알게 되었는데, 위의 출력을 base64 -w0 해서 아래 secretJSON 으로 넣어야 한다...
+$ vi helm-config.yaml
+...
+armAuth:
+    type: servicePrincipal
+    secretJSON: "ewogICJhcHBJZCI6ICIzZTI3NTEy............hZTgwLTQ3Y2ItYmMxZS0zNWFkM2EwYWExZjMiCn0K"
+...
+
+# 다시 설치
+$ helm install -n default ag-ingress-controller -f helm-config.yaml application-gateway-kubernetes-ingress/ingress-azure
+```
+설치는 되는데, 여전히 완전실행이 안된다.
+그나마 로그는 좀더 구체적으로 나옴.
+```
+$ kubectl logs -n default ag-ingress-controller-ingress-azure-54474ffd4b-87kws | tail
+...
+E0819 06:53:37.405949       1 client.go:170] Code="ErrorApplicationGatewayUnexpectedStatusCode" Message="Unexpected status code '401' while performing a GET on Application Gateway." InnerError="network.ApplicationGatewaysClient#Get: Failure responding to request: StatusCode=401 -- Original Error: autorest/azure: Service returned an error. Status=401 Code="AuthenticationFailed" Message="Authentication failed. The 'Authorization' header is missing.""
 ```
 
 
