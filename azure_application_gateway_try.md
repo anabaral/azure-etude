@@ -1144,13 +1144,55 @@ $ helm repo update
 
 $ wget https://raw.githubusercontent.com/Azure/application-gateway-kubernetes-ingress/master/docs/examples/sample-helm-config.yaml -O helm-config.yaml
 $ vi helm-config.yaml
-<몇가지 수정하는데>
-<armAuth.type: aadPodIdentity 하고>
-$ echo "$(terraform output identity_resource_id)"  # for armAuth.identityResourceID
-/subscriptions/3a....d8-a75f-4611-8ca8-16......9283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1
-$ echo "$(terraform output identity_client_id)"    # for armAuth.identityClientID
-9......d-0055-4be7-826f-af3......2f4
-<그 외 선택사항 중 rbac.enabled: true>
+# This file contains the essential configs for the ingress controller helm chart
+
+# Verbosity level of the App Gateway Ingress Controller
+verbosityLevel: 3
+
+################################################################################
+# Specify which application gateway the ingress controller will manage
+#
+appgw:
+    subscriptionId: 3ac347d8-a75f-4611-8ca8-161a69189283     # 구독ID : az account list --output table 명령으로도 볼 수 있음
+    resourceGroup: "04226"                                   # 이것을 따옴표 없이 숫자로 쓰면 다르게 인식됨. 주의
+    name: ApplicationGateway1                                # 만들어 놓은 AG
+    usePrivateIP: false
+
+    # Setting appgw.shared to "true" will create an AzureIngressProhibitedTarget CRD.
+    # This prohibits AGIC from applying config for any host/path.
+    # Use "kubectl get AzureIngressProhibitedTargets" to view and change this.
+    shared: false
+
+################################################################################
+# Specify which kubernetes namespace the ingress controller will watch
+# Default value is "default"
+# Leaving this variable out or setting it to blank or empty string would
+# result in Ingress Controller observing all acessible namespaces.
+#
+# kubernetes:
+#   watchNamespace: <namespace>
+
+################################################################################
+# Specify the authentication with Azure Resource Manager
+#
+# Two authentication methods are available:
+# - Option 1: AAD-Pod-Identity (https://github.com/Azure/aad-pod-identity)
+#armAuth:
+#    type: aadPodIdentity           # 처음에 이걸로 될 줄 알고 시도했었음.
+#    identityResourceID: /subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1
+#    identityClientID:  9c70915d-0055-4be7-826f-af3c37b292f4
+
+## Alternatively you can use Service Principal credentials
+armAuth:
+    type: servicePrincipal
+    secretJSON: "ewogICJjbGllbnRJZCI6ICI1ZT.....3JlLndpbmRvd3MubmV0LyIKfQo="
+    # <<Generate this value with: "az ad sp create-for-rbac --subscription <subscription-uuid> --sdk-auth | base64 -w0" >>
+    # --subscription 옵션은 없어야 실행이 되더라.
+    # --sdk-auth 옵션이 있어야 json 안에 몇 가지 항목이 더 들어감.
+# Specify if the cluster is RBAC enabled or not
+rbac:
+    enabled: true # true/false
+################################################################################
 
 $ helm install -n default ag-ingress-controller -f helm-config.yaml application-gateway-kubernetes-ingress/ingress-azure
 NAME: ag-ingress-controller
@@ -1171,7 +1213,7 @@ Configuration Details:
     - Use AAD-Pod-Identity
  * Application Gateway:
     - Subscription ID : 3ac347d8-a75f-4611-8ca8-161a69189283
-    - Resource Group  : 2198
+    - Resource Group  : 2198    <====  이건 리소스 그룹명을 "04226" 이 아닌 04226 으로 입력했을 때 잘못 인식된 케이스
     - Application Gateway Name : ApplicationGateway1
  * Kubernetes Ingress Controller:
     - Watching All Namespaces
@@ -1181,7 +1223,7 @@ Please make sure the associated aadpodidentity and aadpodidbinding is configured
 For more information on AAD-Pod-Identity, please visit https://github.com/Azure/aad-pod-identity
 ```
 
-설치는 되는데 정상작동 안하고 있음...?
+설치는 되는데 정상작동 안하고 있음...? (리소스 그룹과 az ad sp 명령 잘못 준 탓)
 
 ```
 $ kubectl get  po -n default -l release=ag-ingress-controller
@@ -1189,38 +1231,16 @@ NAME                                                   READY   STATUS    RESTART
 ag-ingress-controller-ingress-azure-59c89485c8-gmp4k   0/1     Running   1          10m
 ```
 
-다시 지우고 셋업 시도
-```
-$ az ad sp create-for-rbac   # 이런게 필요한가?
-Creating a role assignment under the scope of "/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283"
-  Retrying role assignment creation: 1/36
-{
-  "appId": "3e275120-e34a-4ee1-9451-d66ceb58336a",
-  "displayName": "azure-cli-2020-08-19-06-33-08",
-  "name": "http://azure-cli-2020-08-19-06-33-08",
-  "password": "NGZICkRfr6o5eK5O5~.G-92RqHMK3WykV6",
-  "tenant": "458503d6-ae80-47cb-bc1e-35ad3a0aa1f3"
-}
-# 조금 고생하고 알게 되었는데, 위의 출력을 base64 -w0 해서 아래 secretJSON 으로 넣어야 한다...
-$ vi helm-config.yaml
-...
-armAuth:
-    type: servicePrincipal
-    secretJSON: "ewogICJhcHBJZCI6ICIzZTI3NTEy............hZTgwLTQ3Y2ItYmMxZS0zNWFkM2EwYWExZjMiCn0K"
-...
+위에 지적한 사항들 잘 주면 설치 제대로 됨.
 
-# 다시 설치
-$ helm install -n default ag-ingress-controller -f helm-config.yaml application-gateway-kubernetes-ingress/ingress-azure
-```
-설치는 되는데, 여전히 완전실행이 안된다.
-그나마 로그는 좀더 구체적으로 나옴.
+아래 로그는 제대로 값을 안 주었을 때 나오는 예.
 ```
 $ kubectl logs -n default ag-ingress-controller-ingress-azure-54474ffd4b-87kws | tail
 ...
 E0819 06:53:37.405949       1 client.go:170] Code="ErrorApplicationGatewayUnexpectedStatusCode" Message="Unexpected status code '401' while performing a GET on Application Gateway." InnerError="network.ApplicationGatewaysClient#Get: Failure responding to request: StatusCode=401 -- Original Error: autorest/azure: Service returned an error. Status=401 Code="AuthenticationFailed" Message="Authentication failed. The 'Authorization' header is missing.""
 ```
 
-
+아직 ingress 연결은 못한 채임... 헐...
 
 
 
