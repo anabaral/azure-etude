@@ -722,7 +722,7 @@ Terraform will perform the following actions:
 
           + ssh_key {
               + key_data = <<~EOT
-                    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0SfwvY/5LpwR2F2U33xW/QUC87e3UHgCGJ6GPIRcsSCkAdZvWq6bzCHGzu0xlu/3MbTFWC9bniwP7IjfHMHkHFHroZIOIgPyFAdeodw/ndgZE7gkeL7Yew9fAwe2UUKG8vKLgj9Z5m6N4Oyh7St0xy3ryenyoKu/HKnedKuzycj6622cC4N3IktHmZbIZNEAdECPLhT2aUm13z64R5iZCzYuKrH+2zNSvbKj0UDtEfC8FFnvaJ+ciP07AynIWQbxN3w2MpKE3KknWPabk16DlTw5NgIKKhSUaf+5QIDIqvgm+YmYVdLDepOLlKZJoFqBdeCS3yh5XRrJzJvZQLJ4B
+                    ssh-rsa AAAAB3NzaC1........rJzJvZQLJ4B
                 EOT
             }
         }
@@ -1057,6 +1057,34 @@ users:
 ```
 에러 없이 끝났다.
 되었나? 어떻게 확인하지? ㅎㅎ;;;
+
+관리화면에 들어가서 리소스 그룹쪽을 찾아보면 ApplicationGateway1 라는 이름의 게이트웨이가 생성된 것을 확인할 수 있음.
+public ip 부여 되어 있고..
+
+이제 연결이 되나 보자.
+
+keycloak을 설치하고, ingress 를 셋업한다.
+설치 과정은 다른 페이지에 있으니가 생략하고 인그레스만 보이면:
+```
+$ cat keycloak-ing.yaml
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: keycloak-ingress
+  namespace: mta-infra
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: keycloak-http
+          servicePort: 80
+        path: /(.*)
+```
 
 
 
