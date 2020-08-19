@@ -1073,9 +1073,7 @@ metadata:
   name: keycloak-ingress
   namespace: mta-infra
   annotations:
-    kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    kubernetes.io/ingress.class: azure/application-gateway
 spec:
   rules:
   - http:
@@ -1083,7 +1081,8 @@ spec:
       - backend:
           serviceName: keycloak-http
           servicePort: 80
-        path: /(.*)
+        path: /
+    host: azure-keycloak.skmta.net
 ```
 
 근데 설치가 잘 안되네?
@@ -1240,8 +1239,16 @@ $ kubectl logs -n default ag-ingress-controller-ingress-azure-54474ffd4b-87kws |
 E0819 06:53:37.405949       1 client.go:170] Code="ErrorApplicationGatewayUnexpectedStatusCode" Message="Unexpected status code '401' while performing a GET on Application Gateway." InnerError="network.ApplicationGatewaysClient#Get: Failure responding to request: StatusCode=401 -- Original Error: autorest/azure: Service returned an error. Status=401 Code="AuthenticationFailed" Message="Authentication failed. The 'Authorization' header is missing.""
 ```
 
-아직 ingress 연결은 못한 채임... 헐...
+아직 ingress 연결은 못한 채임... 
 
+아까 만든 ingress 는 존재하니, 일단 내 PC의 hosts 파일에 다음 라인을 넣어 보고 
+```
+20.194.15.35   azure-keycloak.skmta.net   # IP는 Application Gateway 찾아가서 정보 확인한 것임
+```
+
+연결해 보는데 ```502 Bad Gateway``` 에러가 난다.
+
+관리콘솔에서 Application Gateway 찾아가면 502 에러가 났음을 알려주고 backend 상태를 로그로 보여줌
 
 
 
