@@ -886,7 +886,177 @@ To perform exactly these actions, run the following command to apply:
     terraform apply "out.plan"
 
 ```
-오 성공했나.
+오 성공했나. 그런데 plan이네
+
+```
+$ terraform apply out.plan
+Acquiring state lock. This may take a few moments...
+azurerm_user_assigned_identity.testIdentity: Creating...
+azurerm_public_ip.test: Creating...
+azurerm_virtual_network.test: Creating...
+azurerm_public_ip.test: Creation complete after 4s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/publicIPAddresses/publicIp1]
+azurerm_user_assigned_identity.testIdentity: Creation complete after 9s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1]
+azurerm_role_assignment.ra2: Creating...
+azurerm_virtual_network.test: Still creating... [10s elapsed]
+azurerm_virtual_network.test: Creation complete after 15s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/virtualNetworks/aksVirtualNetwork]
+data.azurerm_subnet.kubesubnet: Refreshing state...
+data.azurerm_subnet.appgwsubnet: Refreshing state...
+azurerm_role_assignment.ra1: Creating...
+azurerm_application_gateway.network: Creating...
+azurerm_application_gateway.network: Still creating... [10s elapsed]
+azurerm_application_gateway.network: Still creating... [20s elapsed]
+azurerm_application_gateway.network: Still creating... [30s elapsed]
+azurerm_application_gateway.network: Still creating... [40s elapsed]
+azurerm_application_gateway.network: Still creating... [50s elapsed]
+azurerm_application_gateway.network: Still creating... [1m0s elapsed]
+azurerm_application_gateway.network: Still creating... [1m10s elapsed]
+azurerm_application_gateway.network: Still creating... [1m20s elapsed]
+azurerm_application_gateway.network: Still creating... [1m30s elapsed]
+azurerm_application_gateway.network: Still creating... [1m40s elapsed]
+azurerm_application_gateway.network: Still creating... [1m50s elapsed]
+azurerm_application_gateway.network: Still creating... [2m0s elapsed]
+azurerm_application_gateway.network: Still creating... [2m10s elapsed]
+azurerm_application_gateway.network: Still creating... [2m20s elapsed]
+azurerm_application_gateway.network: Still creating... [2m30s elapsed]
+azurerm_application_gateway.network: Still creating... [2m40s elapsed]
+azurerm_application_gateway.network: Still creating... [2m50s elapsed]
+azurerm_application_gateway.network: Still creating... [3m0s elapsed]
+azurerm_application_gateway.network: Still creating... [3m10s elapsed]
+azurerm_application_gateway.network: Still creating... [3m20s elapsed]
+azurerm_application_gateway.network: Still creating... [3m30s elapsed]
+azurerm_application_gateway.network: Still creating... [3m40s elapsed]
+azurerm_application_gateway.network: Still creating... [3m50s elapsed]
+azurerm_application_gateway.network: Still creating... [4m0s elapsed]
+azurerm_application_gateway.network: Still creating... [4m10s elapsed]
+azurerm_application_gateway.network: Still creating... [4m20s elapsed]
+azurerm_application_gateway.network: Still creating... [4m30s elapsed]
+azurerm_application_gateway.network: Still creating... [4m40s elapsed]
+azurerm_application_gateway.network: Still creating... [4m50s elapsed]
+azurerm_application_gateway.network: Still creating... [5m0s elapsed]
+azurerm_application_gateway.network: Still creating... [5m10s elapsed]
+azurerm_application_gateway.network: Still creating... [5m20s elapsed]
+azurerm_application_gateway.network: Still creating... [5m30s elapsed]
+azurerm_application_gateway.network: Creation complete after 5m36s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/applicationGateways/ApplicationGateway1]
+azurerm_role_assignment.ra4: Creating...
+azurerm_role_assignment.ra3: Creating...
+azurerm_kubernetes_cluster.k8s: Creating...
+azurerm_role_assignment.ra4: Still creating... [10s elapsed]
+azurerm_role_assignment.ra3: Still creating... [10s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [10s elapsed]
+azurerm_role_assignment.ra4: Still creating... [20s elapsed]
+azurerm_role_assignment.ra3: Still creating... [20s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [20s elapsed]
+azurerm_role_assignment.ra4: Creation complete after 26s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Authorization/roleAssignments/e83734fb-4d43-28c2-faf2-f20fbe867d76]
+azurerm_role_assignment.ra3: Creation complete after 27s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/applicationGateways/ApplicationGateway1/providers/Microsoft.Authorization/roleAssignments/9caac22a-7e69-0785-5cf0-9d227c76ccc1]
+azurerm_kubernetes_cluster.k8s: Still creating... [30s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [40s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [50s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [1m0s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [1m10s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [1m20s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [1m30s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [1m40s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [1m50s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [2m0s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [2m10s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [2m20s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [2m30s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [2m40s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [2m50s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [3m0s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [3m10s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [3m20s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [3m30s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [3m40s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [3m50s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [4m0s elapsed]
+azurerm_kubernetes_cluster.k8s: Still creating... [4m10s elapsed]
+azurerm_kubernetes_cluster.k8s: Creation complete after 4m11s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ContainerService/managedClusters/aks-cluster1]
+
+Error: authorization.RoleAssignmentsClient#Create: Failure responding to request: StatusCode=400 -- Original Error: autorest/azure: Service returned an error. Status=400 Code="InvalidPrincipalId" Message="A valid principal ID must be provided for role assignment."
+
+  on resources.tf line 131, in resource "azurerm_role_assignment" "ra1":
+ 131: resource "azurerm_role_assignment" "ra1" {
+
+
+
+Error: authorization.RoleAssignmentsClient#Create: Failure responding to request: StatusCode=400 -- Original Error: autorest/azure: Service returned an error. Status=400 Code="InvalidPrincipalId" Message="A valid principal ID must be provided for role assignment."
+
+  on resources.tf line 139, in resource "azurerm_role_assignment" "ra2":
+ 139: resource "azurerm_role_assignment" "ra2" {
+
+```
+
+뭘 또 해야 하는거지... 
+
+일단 이걸 참조함. 잘못 찾는 건지도 모르지만
+https://docs.microsoft.com/ko-kr/azure/role-based-access-control/role-assignments-template
+
+```
+# "나"의 오브젝트 아이디를 찾자.
+$ az ad user show --id "ds04226@infrads.onmicrosoft.com" --query objectId --output tsv
+
+# 이걸 적용
+$ vi terraform.tfvars
+<object_id 에 위의 값을 입력>
+
+# 설정이 바뀌었으니 plan부터 다시 해야 
+$ terraform plan -out out.plan
+...
+$ $ terraform apply out.plan
+Acquiring state lock. This may take a few moments...
+azurerm_role_assignment.ra1: Creating...
+azurerm_role_assignment.ra2: Creating...
+azurerm_kubernetes_cluster.k8s: Modifying... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ContainerService/managedClusters/aks-cluster1]
+azurerm_role_assignment.ra1: Still creating... [10s elapsed]
+azurerm_role_assignment.ra2: Still creating... [10s elapsed]
+azurerm_kubernetes_cluster.k8s: Still modifying... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-...erService/managedClusters/aks-cluster1, 10s elapsed]
+azurerm_role_assignment.ra2: Still creating... [20s elapsed]
+azurerm_role_assignment.ra1: Still creating... [20s elapsed]
+azurerm_kubernetes_cluster.k8s: Still modifying... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-...erService/managedClusters/aks-cluster1, 20s elapsed]
+azurerm_role_assignment.ra2: Creation complete after 26s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1/providers/Microsoft.Authorization/roleAssignments/386f034b-037b-8699-3ff4-8451d1e35741]
+azurerm_role_assignment.ra1: Creation complete after 26s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/virtualNetworks/aksVirtualNetwork/subnets/kubesubnet/providers/Microsoft.Authorization/roleAssignments/0308a06a-f0f3-3d9f-2760-26ccc7f16196]
+azurerm_kubernetes_cluster.k8s: Still modifying... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-...erService/managedClusters/aks-cluster1, 30s elapsed]
+azurerm_kubernetes_cluster.k8s: Still modifying... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-...erService/managedClusters/aks-cluster1, 40s elapsed]
+azurerm_kubernetes_cluster.k8s: Still modifying... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-...erService/managedClusters/aks-cluster1, 50s elapsed]
+azurerm_kubernetes_cluster.k8s: Still modifying... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-...erService/managedClusters/aks-cluster1, 1m0s elapsed]
+azurerm_kubernetes_cluster.k8s: Modifications complete after 1m8s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ContainerService/managedClusters/aks-cluster1]
+
+Apply complete! Resources: 2 added, 1 changed, 0 destroyed.
+
+Outputs:
+
+client_certificate = LS0tLS1CRUdJTiB........RVJUSUZJQ0FURS0tLS0tCg==
+client_key = LS0tLS1CRUdJTi........S0VZLS0tLS0K
+cluster_ca_certificate = LS0tLS1CRUdJTiBDRVJ........JQ0FURS0tLS0tCg==
+cluster_password = 788f4f10e........a35bd
+cluster_username = clusterUser_04226_aks-cluster1
+host = https://aks-65b53683.hcp.koreacentral.azmk8s.io:443
+identity_client_id = 9c70915d-0055-4be7-826f-af3c37b292f4
+identity_resource_id = /subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1
+kube_config = apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1........URS0tLS0tCg==
+    server: https://aks-65b53683.hcp.koreacentral.azmk8s.io:443
+  name: aks-cluster1
+contexts:
+- context:
+    cluster: aks-cluster1
+    user: clusterUser_04226_aks-cluster1
+  name: aks-cluster1
+current-context: aks-cluster1
+kind: Config
+preferences: {}
+users:
+- name: clusterUser_04226_aks-cluster1
+  user:
+    client-certificate-data: LS0tLS1CRU........Q0FURS0tLS0tCg==
+    client-key-data: LS0tLS1CRUdJTiBSU0E........0VZLS0tLS0K
+    token: 788f4........15a35bd
+```
+에러 없이 끝났다.
+되었나? 어떻게 확인하지? ㅎㅎ;;;
 
 
 
