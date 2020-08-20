@@ -3,27 +3,31 @@
 다음 링크를 참조함:
 https://docs.microsoft.com/ko-kr/azure/developer/terraform/create-k8s-cluster-with-aks-applicationgateway-ingress
 
-※ 나중에 알게 된 거지만 위의 링크 가이드는 그냥 배스천에서는 안된다. Azure Portal 에서 실행하는 Cloud shell에서 실행하는 건데 
-   거기엔 약간의 환경적인 준비가 되어 있는데 뭔지는 아직 모름. 
+이게 배스천과 Cloud shell 에서의 경과가 약간 다른데, 알고 보니 배스천에 설치되는 terraform 버전 문제였음. 아래 상세히 나옵니다.
 
 먼저 준비:
 ```
 # 배스천에서 쉽게 설치하는 방법
-$ sudo snap install terraform  # 이것은 cloud shell 에서는 불필요
+$ sudo snap install terraform  # 이게 설치되는 최신 버전이 2020-08-20 현재 v0.11 대 버전
 Download snap "terraform" (216) from channel "stable"           53%  139kB/s 1m40s
 
-# 그러나 위의 것은 옛날 버전이라 최신 버전을 설치하려면
+# 최신 버전을 설치하려면
 $ curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
 $ sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
 $ sudo apt-get update && sudo apt-get install terraform
-# 그런데 이 terraform 은 이상하게도 sudo로만 실행이 됨. ???
+# 그런데 이 terraform 은 이상하게도 sudo로만 실행이 됨. ===> 이건 재로그인하면 언제 그랬냐는 듯이 해결됨. PATH 문제?
 ```
 
-왜 테라폼을 쓰는 지 모르겠지만.. 
+왜 테라폼을 쓰는 지 모르겠지만.. 아래 작성되는 파일들을 보면 따로 손으로 하려면 해야 할 게 많아서일지도 모르겠습니다.
 
+그리고 필수적인 것은 아니지만 복붙을 편하게 하기 위한 스크립팅에 사용하게 jq를 설치
+```
+$ sudo snap install jq
+```
 
 
 ## 파일 작성
+
 ```
 $ vi main.tf
 provider "azurerm" {
@@ -170,7 +174,6 @@ variable "tags" {
 
 ```
 $ vi resources.tf
-# # Locals block for hardcoded names. 
 # # Locals block for hardcoded names.
 locals {
     backend_address_pool_name      = "${azurerm_virtual_network.test.name}-beap"
@@ -428,9 +431,46 @@ $ az storage container create -n tfstate --account-name 04226diag --account-key 
 ## 테라폼 초기화 시도 
 (참조: https://docs.microsoft.com/ko-kr/azure/aks/update-credentials )
 
+Service Principal 관련 정보를 먼저 얻고 이를 이용해 초기화함 (Service Principal은 한글로 서비스 주체 라고 부름)
+다음은 
+```
+$ SUBSCRIPTION=$(az account show --query id -o tsv)
+$ az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION}"
+Creating a role assignment under the scope of "/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283"
+  Retrying role assignment creation: 1/36
+{
+  "appId": "81de2f9f-a0f9-4c72-8846-e3ce70a29511",
+  "displayName": "azure-cli-2020-08-20-12-32-01",
+  "name": "http://azure-cli-2020-08-20-12-32-01",
+  "password": "xn12zT.....................fXvIW0",
+  "tenant": "458503d6-ae80-47cb-bc1e-35ad3a0aa1f3"
+}
+# 위의 displayName 을 이용해
+$ OBJECT_ID=$(az ad sp list --display-name azure-cli-2020-08-20-12-32-01 | jq -r '.[].objectId')
+53fbda23-9e1e-4d74-949a-06d3200e36f9
+
+# 파일 작성
+$ vi terraform.tfvars
+aks_name = "myAKSCluster"  # 이 라인은 참조처에는 없는데 필요함. 지정하지 않으면 variables.tf 에 있는 기본값 "aks-cluster1" 이 들어감.
+
+resource_group_name = "<Name of the Resource Group already created>" # 이건 내 리소스 그룹 (내 경우엔 04226) 을 입력
+
+location = "<Location of the Resource Group>" # 리소스 그룹의 위치 (내 경우엔 koreacentral)
+
+aks_service_principal_app_id = "<Service Principal AppId>"  # 위의 appId 입력
+
+aks_service_principal_client_secret = "<Service Principal Client Secret>"  # 위의 password 입력
+
+aks_service_principal_object_id = "<Service Principal Object Id>"     # 위의 $OBJECT_ID 입력
+```
+
+
+
+
+아래에 있는 것도 terraform init 까지는 되는데 일단 보류
 ```
 # 변수 설정
-# service principal client id 구하기
+# service principal client id 구하기 
 $ SP_ID=$(az aks show --resource-group 04226 --name myAKS  --query servicePrincipalProfile.clientId -o tsv)
 
 # 만료날자 확인 (생성시점으로부터 1년)
@@ -443,9 +483,11 @@ $ SP_SECRET=$(az ad sp credential reset --name $SP_ID --query password -o tsv)
 $ OBJECT_ID=$(az ad user show --id "ds04226@infrads.onmicrosoft.com" --query objectId --output tsv)
 
 $ vi terraform.tfvars
-resource_group_name = "<Name of the Resource Group already created>"
+aks_name = "myAKSCluster"  # 이 라인은 참조처에는 없는데 필요함. 지정하지 않으면 variables.tf 에 있는 기본값 "aks-cluster1" 이 들어감.
 
-location = "<Location of the Resource Group>"
+resource_group_name = "<Name of the Resource Group already created>" # 이건 내 리소스 그룹 (내 경우엔 04226) 을 입력
+
+location = "<Location of the Resource Group>" # 리소스 그룹의 위치 (내 경우엔 koreacentral)
 
 aks_service_principal_app_id = "<Service Principal AppId>"  # 만들어 놓은 AKS의 servicePrincipalProfile 속성인데, 위의 $SP_ID 를 입력
 
@@ -454,7 +496,7 @@ aks_service_principal_client_secret = "<Service Principal Client Secret>"  # 위
 aks_service_principal_object_id = "<Service Principal Object Id>"     # 위의 $OBJECT_ID 입력
 ```
 
-여기까지 하고 terraform init 을 시도하는 데 에러가 남.
+여기까지 하고 terraform init 을 시도하는 데 에러가 난 적이 있음.
 
 ```
 # 위의 ACCOUNT_KEY 를 사용
@@ -464,6 +506,7 @@ Error: Error parsing /home/azureuser/terraform-aks-appgw-ingress/output.tf: At 2
 
 이게 이상한 것이, 배스천에서 시도하면 에러가 나고 Cloud shell 에서 실행하면 에러가 안나거나 다른 에러가 남.
 둘은 환경적으로 뭔가 차이가 있는데 이를테면
+
 ```
 # 배스천에서는
 $ terraform workspace show  # 존재하는 건 확인되지만
@@ -478,7 +521,7 @@ $ terraform workspace list  # 정상
 * default
 ```
 
-... 정말 고생고생한 후 알아낸 사실. terraform v0.11 버전 (배스천에서 snap으로 설치한 버전) 으로는 에러가 나는데 v0.12 나 v0.13 버전은 제대로 실행됨(!!!)
+... 정말 고생고생한 후 알아낸 사실. 배스천에서 snap으로 설치한 terraform v0.11 버전에서 에러 나던 게 v0.12 나 v0.13 버전은 제대로 실행됨(!!!)
 
 ```
 $ terraform init -backend-config="storage_account_name=04226diag" -backend-config="container_name=tfstate" -backend-config="access_key=<04226_diag 에 달린 storage account key 쓰면 됨>" -backend-config="key=codelab.microsoft.tfstate"
@@ -497,7 +540,7 @@ rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
 
-## plan / 
+## plan / apply
 
 
 아래는 실패한 예..
@@ -1274,6 +1317,18 @@ $ kubectl logs -n default ag-ingress-controller-ingress-azure-54474ffd4b-87kws |
 ...
 E0819 06:53:37.405949       1 client.go:170] Code="ErrorApplicationGatewayUnexpectedStatusCode" Message="Unexpected status code '401' while performing a GET on Application Gateway." InnerError="network.ApplicationGatewaysClient#Get: Failure responding to request: StatusCode=401 -- Original Error: autorest/azure: Service returned an error. Status=401 Code="AuthenticationFailed" Message="Authentication failed. The 'Authorization' header is missing.""
 ```
+
+
+## 삭제는?
+
+무엇이 생기는 지 식별해 두자.
+* 공용 IP 주소 (public ip) "publicIp1" 
+* 관리ID (identity) "identity1"
+* 애플리케이션 게이트웨이 (application gateway)
+* 서브넷 -- 이건 아직 잘 모름
+
+
+## Ingress 연결은?
 
 아직 ingress 연결은 못한 채임... 
 
