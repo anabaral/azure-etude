@@ -4,15 +4,26 @@
 https://docs.microsoft.com/ko-kr/azure/developer/terraform/create-k8s-cluster-with-aks-applicationgateway-ingress
 
 ※ 나중에 알게 된 거지만 위의 링크 가이드는 그냥 배스천에서는 안된다. Azure Portal 에서 실행하는 Cloud shell에서 실행하는 건데 
-   거기엔 약간의 환경적인 준비가 되어 있다. 그걸 몰라서 고생함. 
+   거기엔 약간의 환경적인 준비가 되어 있는데 뭔지는 아직 모름. 
 
 먼저 준비:
 ```
+# 배스천에서 쉽게 설치하는 방법
 $ sudo snap install terraform  # 이것은 cloud shell 에서는 불필요
 Download snap "terraform" (216) from channel "stable"           53%  139kB/s 1m40s
+
+# 그러나 위의 것은 옛날 버전이라 최신 버전을 설치하려면
+$ curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+$ sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+$ sudo apt-get update && sudo apt-get install terraform
+# 그런데 이 terraform 은 이상하게도 sudo로만 실행이 됨. ???
 ```
 
-왜 테라폼을 쓰는 지 모르겠지만.. 파일을 작성
+왜 테라폼을 쓰는 지 모르겠지만.. 
+
+
+
+## 파일 작성
 ```
 $ vi main.tf
 provider "azurerm" {
@@ -414,14 +425,61 @@ $ az storage container create -n tfstate --account-name 04226diag --account-key 
 ```
 
 
-테라폼 초기화 시도 하는데 에러가 나네? <-- 이건 Cloud shell 에서 실행하지 않은 것과 관련이 있음
+## 테라폼 초기화 시도 
+(참조: https://docs.microsoft.com/ko-kr/azure/aks/update-credentials )
+
 ```
-$ terraform init -backend-config="storage_account_name=04226diag" -backend-config="container_name=tfstate" -backend-config="access_key=<YourStorageAccountAccessKey>" -backend-config="key=codelab.microsoft.tfstate" 
+# 변수 설정
+# service principal client id 구하기
+$ SP_ID=$(az aks show --resource-group 04226 --name myAKS  --query servicePrincipalProfile.clientId -o tsv)
+
+# 만료날자 확인 (생성시점으로부터 1년)
+$ az ad sp credential list --id $SP_ID --query "[].endDate" -o tsv
+
+# credential을 새로 리셋하면서 얻음. 나중에는 모르니 적어두어야..
+$ SP_SECRET=$(az ad sp credential reset --name $SP_ID --query password -o tsv) 
+
+# 계정의 오브젝트아이디
+$ OBJECT_ID=$(az ad user show --id "ds04226@infrads.onmicrosoft.com" --query objectId --output tsv)
+
+$ vi terraform.tfvars
+resource_group_name = "<Name of the Resource Group already created>"
+
+location = "<Location of the Resource Group>"
+
+aks_service_principal_app_id = "<Service Principal AppId>"  # 만들어 놓은 AKS의 servicePrincipalProfile 속성인데, 위의 $SP_ID 를 입력
+
+aks_service_principal_client_secret = "<Service Principal Client Secret>"  # 위의 $SP_SECRET 입력
+
+aks_service_principal_object_id = "<Service Principal Object Id>"     # 위의 $OBJECT_ID 입력
+```
+
+여기까지 하고 terraform init 을 시도하는 데 에러가 남.
+
+```
+# 위의 ACCOUNT_KEY 를 사용
+$ terraform init -backend-config="storage_account_name=04226diag" -backend-config="container_name=tfstate" -backend-config="access_key=<YourStorageAccountAccessKey 즉 ACCOUNT_KEY>" -backend-config="key=codelab.microsoft.tfstate" 
 Error: Error parsing /home/azureuser/terraform-aks-appgw-ingress/output.tf: At 2:13: Unknown token: 2:13 IDENT azurerm_kubernetes_cluster.k8s.kube_config.0.client_key
 ```
 
-Cloud shell 에서 실행할 때는 다른 에러가 났었는데.. access_key가 잘못되었다고 하면서.. 그런데 실제 잘못되지는 않았고..
-계속 재시도하다 어느 순간 되기 시작했는데 된 이유는 모르겠음.
+이게 이상한 것이, 배스천에서 시도하면 에러가 나고 Cloud shell 에서 실행하면 에러가 안나거나 다른 에러가 남.
+둘은 환경적으로 뭔가 차이가 있는데 이를테면
+```
+# 배스천에서는
+$ terraform workspace show  # 존재하는 건 확인되지만
+default
+$ terraform workspace list  # 에러
+Failed to load root config module: Error parsing /home/azureuser/terraform-aks-appgw-ingress/output.tf: At 2:13: Unknown token: 2:13 IDENT azurerm_kubernetes_cluster.k8s.kube_config.0.client_key
+
+# Cloud shell 에서는
+$ terraform workspace show  # 존재하는 건 확인되고
+default
+$ terraform workspace list  # 정상
+* default
+```
+
+... 정말 고생고생한 후 알아낸 사실. terraform v0.11 버전 (배스천에서 snap으로 설치한 버전) 으로는 에러가 나는데 v0.12 나 v0.13 버전은 제대로 실행됨(!!!)
+
 ```
 $ terraform init -backend-config="storage_account_name=04226diag" -backend-config="container_name=tfstate" -backend-config="access_key=<04226_diag 에 달린 storage account key 쓰면 됨>" -backend-config="key=codelab.microsoft.tfstate"
 Initializing the backend...
@@ -439,19 +497,10 @@ rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
 
-```
-$ vi terraform.tfvars
-resource_group_name = "<Name of the Resource Group already created>"
+## plan / 
 
-location = "<Location of the Resource Group>"
 
-aks_service_principal_app_id = "<Service Principal AppId>"  # 만들어 놓은 AKS의 servicePrincipalProfile 속성에 적힌 것을 입력함
-
-aks_service_principal_client_secret = "<Service Principal Client Secret>"  # 몰라서 빈간으로 했다가 에러가 나던데.. 나중에 구하는 방법을 알게됨
-
-aks_service_principal_object_id = "<Service Principal Object Id>"     # 몰라서 빈간으로 했다가 에러가 나던데.. 나중에 구하는 방법을 알게됨
-```
-
+아래는 실패한 예..
 ```
 $ terraform plan -out out.plan
 Acquiring state lock. This may take a few moments...
@@ -473,7 +522,7 @@ Error: Error in function call
 Call to function "file" failed: no file exists at
 /home/ds04226/.ssh/id_rsa.pub.
 ```
-실행이 안되는데, 본래 AKS를 Cloud shell에서 (--generate-ssh-keys 옵션 쓰고) 생성했다면 나지 않았을 에러.
+처음에 배스천에서 AKS를 생성하고 Cloud shell에서 terraform 을 실행하다 보니  --generate-ssh-keys 옵션으로 생성한 ssh 키가 Cloud shell에 없어서 나는 에러
 
 별 수 없이 AKS를 생성했던 배스천에서 파일 복사 후
 ```
@@ -497,22 +546,9 @@ Error: expected "service_principal.0.client_secret" to not be an empty string, g
 ```
 날 수 있는 에러는 다 나네. 
 
-https://docs.microsoft.com/ko-kr/azure/aks/update-credentials
-이걸 참조하여 service principal 을 만들어야 하나보다.
+
 
 ```
-# service principal client id 구하기
-$ SP_ID=$(az aks show --resource-group 04226 --name myAKS  --query servicePrincipalProfile.clientId -o tsv)
-
-# 만료날자 확인 (생성시점으로부터 5년)
-$ az ad sp credential list --id $SP_ID --query "[].endDate" -o tsv
-
-# 리셋하면서 client secret 얻자
-$ SP_SECRET=$(az ad sp credential reset --name $SP_ID --query password -o tsv)
-$ echo $SP_SECRET
-<결과>
-$ vi terraform.tfvars
-<위의 결과를 적용>
 $ terraform plan -out out.plan
 Acquiring state lock. This may take a few moments...
 Refreshing Terraform state in-memory prior to plan...
