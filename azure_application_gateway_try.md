@@ -3,6 +3,12 @@
 다음 링크를 참조함:
 https://docs.microsoft.com/ko-kr/azure/developer/terraform/create-k8s-cluster-with-aks-applicationgateway-ingress
 
+이 링크가 더 요긴함:
+https://zerobig-k8s.tistory.com/55
+
+미리 언급하는데 아래 나오는 내용대로 따라가면 새로운 AKS 클러스터가 생성됩니다. 기존의 AKS 클러스터에 붙이기를 원했었기에
+조금 황당했는데.. 아마 몇 가지 수정이 필요할 것 같습니다.
+
 이게 배스천과 Cloud shell 에서의 경과가 약간 다른데, 알고 보니 배스천에 설치되는 terraform 버전 문제였음. 아래 상세히 나옵니다.
 
 먼저 준비:
@@ -465,37 +471,6 @@ aks_service_principal_object_id = "<Service Principal Object Id>"     # 위의 $
 ```
 
 
-
-
-아래에 있는 것도 terraform init 까지는 되는데 일단 보류
-```
-# 변수 설정
-# service principal client id 구하기 
-$ SP_ID=$(az aks show --resource-group 04226 --name myAKS  --query servicePrincipalProfile.clientId -o tsv)
-
-# 만료날자 확인 (생성시점으로부터 1년)
-$ az ad sp credential list --id $SP_ID --query "[].endDate" -o tsv
-
-# credential을 새로 리셋하면서 얻음. 나중에는 모르니 적어두어야..
-$ SP_SECRET=$(az ad sp credential reset --name $SP_ID --query password -o tsv) 
-
-# 계정의 오브젝트아이디
-$ OBJECT_ID=$(az ad user show --id "ds04226@infrads.onmicrosoft.com" --query objectId --output tsv)
-
-$ vi terraform.tfvars
-aks_name = "myAKSCluster"  # 이 라인은 참조처에는 없는데 필요함. 지정하지 않으면 variables.tf 에 있는 기본값 "aks-cluster1" 이 들어감.
-
-resource_group_name = "<Name of the Resource Group already created>" # 이건 내 리소스 그룹 (내 경우엔 04226) 을 입력
-
-location = "<Location of the Resource Group>" # 리소스 그룹의 위치 (내 경우엔 koreacentral)
-
-aks_service_principal_app_id = "<Service Principal AppId>"  # 만들어 놓은 AKS의 servicePrincipalProfile 속성인데, 위의 $SP_ID 를 입력
-
-aks_service_principal_client_secret = "<Service Principal Client Secret>"  # 위의 $SP_SECRET 입력
-
-aks_service_principal_object_id = "<Service Principal Object Id>"     # 위의 $OBJECT_ID 입력
-```
-
 여기까지 하고 terraform init 을 시도하는 데 에러가 난 적이 있음.
 
 ```
@@ -567,87 +542,167 @@ Call to function "file" failed: no file exists at
 ```
 처음에 배스천에서 AKS를 생성하고 Cloud shell에서 terraform 을 실행하다 보니  --generate-ssh-keys 옵션으로 생성한 ssh 키가 Cloud shell에 없어서 나는 에러
 
-별 수 없이 AKS를 생성했던 배스천에서 파일 복사 후
+AKS를 생성했던 배스천에서 파일 복사 후
 ```
 $ vi ~/.ssh/id_rsa.pub
 ```
+다시 시도하면 됨.
 
-다시 시도.
-```
-$ terraform plan -out out.planAcquiring state lock. This may take a few moments...Refreshing Terraform state in-memory prior to plan...
-The refreshed state will be used to calculate this plan, but will not be
-persisted to local or remote state storage.
-
-data.azurerm_resource_group.rg: Refreshing state...
-
-------------------------------------------------------------------------
-
-Error: expected "service_principal.0.client_secret" to not be an empty string, got
-
-  on resources.tf line 160, in resource "azurerm_kubernetes_cluster" "k8s":
- 160: resource "azurerm_kubernetes_cluster" "k8s" {
-```
-날 수 있는 에러는 다 나네. 
-
-
-
+아래는 다른 실패사례.
 ```
 $ terraform plan -out out.plan
-Acquiring state lock. This may take a few moments...
 Refreshing Terraform state in-memory prior to plan...
 The refreshed state will be used to calculate this plan, but will not be
 persisted to local or remote state storage.
 
-data.azurerm_resource_group.rg: Refreshing state...
+data.azurerm_resource_group.rg: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226]
+azurerm_user_assigned_identity.testIdentity: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microso      ft.ManagedIdentity/userAssignedIdentities/identity1]
+azurerm_public_ip.test: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/publicIPAd      dresses/publicIp1]
+data.azurerm_subnet.appgwsubnet: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/v      irtualNetworks/aksVirtualNetwork/subnets/appgwsubnet]
+data.azurerm_subnet.kubesubnet: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/vi      rtualNetworks/aksVirtualNetwork/subnets/kubesubnet]
+azurerm_role_assignment.ra2: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdenti      ty/userAssignedIdentities/identity1/providers/Microsoft.Authorization/roleAssignments/3a363938-b660-131e-8f3f-e19e94313406]
+
+Error: Error: Subnet "kubesubnet" (Virtual Network "aksVirtualNetwork" / Resource Group "04226") was not found
+
+  on resources.tf line 45, in data "azurerm_subnet" "kubesubnet":
+  45: data "azurerm_subnet" "kubesubnet" {
+
+
+
+Error: Error: Subnet "appgwsubnet" (Virtual Network "aksVirtualNetwork" / Resource Group "04226") was not found
+
+  on resources.tf line 51, in data "azurerm_subnet" "appgwsubnet":
+  51: data "azurerm_subnet" "appgwsubnet" {
+
+
+```
+별 걸 다 의심하면서 이것저것 시도해 봤는데 결론은 terraform이 뭔가 이상하다...
+
+위의 ```*.tf``` 파일들을 보면 알겠지만 순차적 실행하는 코드가 아니기에 terraform이 뭔가 잘못 판단하면 A가 없어서 B가 안되고 B가 없어서 A가 안되는 식의 에러가 나는 것 같다.
+
+거의 terraform 명령어 공부하듯이 뒤져가면서 시도한 것은 다음
+```
+$ terraform plan -out out.plan -target azurerm_virtual_network.test
+Refreshing Terraform state in-memory prior to plan...
+The refreshed state will be used to calculate this plan, but will not be
+persisted to local or remote state storage.
+
+data.azurerm_resource_group.rg: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226]
 
 ------------------------------------------------------------------------
 
 An execution plan has been generated and is shown below.
 Resource actions are indicated with the following symbols:
   + create
- <= read (data resources)
 
 Terraform will perform the following actions:
 
-  # data.azurerm_subnet.appgwsubnet will be read during apply
-  # (config refers to values not yet known)
- <= data "azurerm_subnet" "appgwsubnet"  {
-      + address_prefix                                 = (known after apply)
-      + address_prefixes                               = (known after apply)
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "appgwsubnet"
-      + network_security_group_id                      = (known after apply)
-      + resource_group_name                            = "04226"
-      + route_table_id                                 = (known after apply)
-      + service_endpoints                              = (known after apply)
-      + virtual_network_name                           = "aksVirtualNetwork"
-
-      + timeouts {
-          + read = (known after apply)
+  # azurerm_virtual_network.test will be created
+  + resource "azurerm_virtual_network" "test" {
+      + address_space       = [
+          + "15.0.0.0/8",
+        ]
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "koreacentral"
+      + name                = "aksVirtualNetwork"
+      + resource_group_name = "04226"
+      + subnet              = [
+          + {
+              + address_prefix = "15.0.0.0/16"
+              + id             = (known after apply)
+              + name           = "kubesubnet"
+              + security_group = ""
+            },
+          + {
+              + address_prefix = "15.1.0.0/16"
+              + id             = (known after apply)
+              + name           = "appgwsubnet"
+              + security_group = ""
+            },
+        ]
+      + tags                = {
+          + "source" = "terraform"
         }
     }
 
-  # data.azurerm_subnet.kubesubnet will be read during apply
-  # (config refers to values not yet known)
- <= data "azurerm_subnet" "kubesubnet"  {
-      + address_prefix                                 = (known after apply)
-      + address_prefixes                               = (known after apply)
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "kubesubnet"
-      + network_security_group_id                      = (known after apply)
-      + resource_group_name                            = "04226"
-      + route_table_id                                 = (known after apply)
-      + service_endpoints                              = (known after apply)
-      + virtual_network_name                           = "aksVirtualNetwork"
+Plan: 1 to add, 0 to change, 0 to destroy.
 
-      + timeouts {
-          + read = (known after apply)
-        }
-    }
+Changes to Outputs:
+  - identity_client_id   = "df40eaed-bfda-4605-ad21-3c390428e40d" -> null
+  - identity_resource_id = "/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1" -> null
+
+Warning: Resource targeting is in effect
+
+You are creating a plan with the -target option, which means that the result
+of this plan may not represent all of the changes requested by the current
+configuration.
+
+The -target option is not for routine use, and is provided only for
+exceptional situations such as recovering from errors or mistakes, or when
+Terraform specifically suggests to use it as part of an error message.
+
+
+------------------------------------------------------------------------
+
+This plan was saved to: out.plan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "out.plan"
+
+```
+
+```
+$ terraform apply out.plan
+azurerm_virtual_network.test: Creating...
+azurerm_virtual_network.test: Still creating... [10s elapsed]
+azurerm_virtual_network.test: Creation complete after 10s [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/virtualNetworks/aksVirtualNetwork]
+
+Warning: Applied changes may be incomplete
+
+The plan was created with the -target option in effect, so some changes
+requested in the configuration may have been ignored and the output values may
+not be fully updated. Run the following command to verify that no other
+changes are pending:
+    terraform plan
+
+Note that the -target option is not suitable for routine use, and is provided
+only for exceptional situations such as recovering from errors or mistakes, or
+when Terraform specifically suggests to use it as part of an error message.
+
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+identity_client_id = df40eaed-bfda-4605-ad21-3c390428e40d
+identity_resource_id = /subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1
+```
+즉 서브넷을 포함한 가상 네트워크를 먼저 만들어 준다.
+그리고 나서 전체를 다시 시도
+
+
+```
+$ terraform plan -out out.plan
+Refreshing Terraform state in-memory prior to plan...
+The refreshed state will be used to calculate this plan, but will not be
+persisted to local or remote state storage.
+
+data.azurerm_resource_group.rg: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226]
+azurerm_public_ip.test: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/publicIPAddresses/publicIp1]
+azurerm_virtual_network.test: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/virtualNetworks/aksVirtualNetwork]
+azurerm_user_assigned_identity.testIdentity: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1]
+azurerm_role_assignment.ra2: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1/providers/Microsoft.Authorization/roleAssignments/3a363938-b660-131e-8f3f-e19e94313406]
+data.azurerm_subnet.appgwsubnet: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/virtualNetworks/aksVirtualNetwork/subnets/appgwsubnet]
+data.azurerm_subnet.kubesubnet: Refreshing state... [id=/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/virtualNetworks/aksVirtualNetwork/subnets/kubesubnet]
+
+------------------------------------------------------------------------
+
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
 
   # azurerm_application_gateway.network will be created
   + resource "azurerm_application_gateway" "network" {
@@ -698,7 +753,7 @@ Terraform will perform the following actions:
       + gateway_ip_configuration {
           + id        = (known after apply)
           + name      = "appGatewayIpConfig"
-          + subnet_id = (known after apply)
+          + subnet_id = "/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/virtualNetworks/aksVirtualNetwork/subnets/appgwsubnet"
         }
 
       + http_listener {
@@ -793,16 +848,14 @@ Terraform will perform the following actions:
           + os_disk_size_gb      = 40
           + type                 = "VirtualMachineScaleSets"
           + vm_size              = "Standard_D3_v2"
-          + vnet_subnet_id       = (known after apply)
+          + vnet_subnet_id       = "/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/virtualNetworks/aksVirtualNetwork/subnets/kubesubnet"
         }
 
       + linux_profile {
           + admin_username = "vmuser1"
 
           + ssh_key {
-              + key_data = <<~EOT
-                    ssh-rsa AAAAB3NzaC1........rJzJvZQLJ4B
-                EOT
+              + key_data = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0SfwvY/5LpwR2F2U33xW/QUC87e3UHgCGJ6GPIRcsSCkAdZvWq6bzCHGzu0xlu/3MbTFWC9bniwP7IjfHMHkHFHroZIOIgPyFAdeodw/ndgZE7gkeL7Yew9fAwe2UUKG8vKLgj9Z5m6N4Oyh7St0xy3ryenyoKu/HKnedKuzycj6622cC4N3IktHmZbIZNEAdECPLhT2aUm13z64R5iZCzYuKrH+2zNSvbKj0UDtEfC8FFnvaJ+ciP07AynIWQbxN3w2MpKE3KknWPabk16DlTw5NgIKKhSUaf+5QIDIqvgm+YmYVdLDepOLlKZJoFqBdeCS3yh5XRrJzJvZQLJ4B"
             }
         }
 
@@ -840,7 +893,7 @@ Terraform will perform the following actions:
         }
 
       + service_principal {
-          + client_id     = "8ce78bdc-cc25-4a18-a342-17dd50574a3f"
+          + client_id     = "81de2f9f-a0f9-4c72-8846-e3ce70a29511"
           + client_secret = (sensitive value)
         }
 
@@ -871,10 +924,11 @@ Terraform will perform the following actions:
   + resource "azurerm_role_assignment" "ra1" {
       + id                               = (known after apply)
       + name                             = (known after apply)
+      + principal_id                     = "53fbda23-9e1e-4d74-949a-06d3200e36f9"
       + principal_type                   = (known after apply)
       + role_definition_id               = (known after apply)
       + role_definition_name             = "Network Contributor"
-      + scope                            = (known after apply)
+      + scope                            = "/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Network/virtualNetworks/aksVirtualNetwork/subnets/kubesubnet"
       + skip_service_principal_aad_check = (known after apply)
     }
 
@@ -882,6 +936,7 @@ Terraform will perform the following actions:
   + resource "azurerm_role_assignment" "ra2" {
       + id                               = (known after apply)
       + name                             = (known after apply)
+      + principal_id                     = "53fbda23-9e1e-4d74-949a-06d3200e36f9"
       + principal_type                   = (known after apply)
       + role_definition_id               = (known after apply)
       + role_definition_name             = "Managed Identity Operator"
@@ -926,36 +981,18 @@ Terraform will perform the following actions:
         }
     }
 
-  # azurerm_virtual_network.test will be created
-  + resource "azurerm_virtual_network" "test" {
-      + address_space       = [
-          + "15.0.0.0/8",
-        ]
-      + guid                = (known after apply)
-      + id                  = (known after apply)
-      + location            = "koreacentral"
-      + name                = "aksVirtualNetwork"
-      + resource_group_name = "04226"
-      + subnet              = [
-          + {
-              + address_prefix = "15.0.0.0/16"
-              + id             = (known after apply)
-              + name           = "kubesubnet"
-              + security_group = ""
-            },
-          + {
-              + address_prefix = "15.1.0.0/16"
-              + id             = (known after apply)
-              + name           = "appgwsubnet"
-              + security_group = ""
-            },
-        ]
-      + tags                = {
-          + "source" = "terraform"
-        }
-    }
+Plan: 8 to add, 0 to change, 0 to destroy.
 
-Plan: 9 to add, 0 to change, 0 to destroy.
+Changes to Outputs:
+  + client_certificate     = (known after apply)
+  + client_key             = (known after apply)
+  + cluster_ca_certificate = (known after apply)
+  + cluster_password       = (known after apply)
+  + cluster_username       = (known after apply)
+  + host                   = (known after apply)
+  ~ identity_client_id     = "df40eaed-bfda-4605-ad21-3c390428e40d" -> (known after apply)
+  ~ identity_resource_id   = "/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourcegroups/04226/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1" -> (known after apply)
+  + kube_config            = (known after apply)
 
 ------------------------------------------------------------------------
 
@@ -964,8 +1001,9 @@ This plan was saved to: out.plan
 To perform exactly these actions, run the following command to apply:
     terraform apply "out.plan"
 
+
 ```
-오 성공했나. 그런데 plan이네
+이제 생성.
 
 ```
 $ terraform apply out.plan
@@ -1135,14 +1173,34 @@ users:
     token: 788f4........15a35bd
 ```
 에러 없이 끝났다.
-되었나? 어떻게 확인하지? ㅎㅎ;;;
-
 관리화면에 들어가서 리소스 그룹쪽을 찾아보면 ApplicationGateway1 라는 이름의 게이트웨이가 생성된 것을 확인할 수 있음.
 public ip 부여 되어 있고..
+
+그러나
+
+cluster가 aks-cluster1 이라고??? <br>
+확인해 보니 aks-cluster1 클러스터가 만들어졌음.<br>
+허허허...<br>
+이미 생성된 AKS에 연결시켜주는 줄 알았지..
+
+```
+$ az aks get-credentials --resource-group 04226 --name aks-cluster1
+
+$ az aks delete -g 04226 -n myAKSCluster # 원래 만들어 놓았던 걸 삭제
+```
+
 
 이제 연결이 되나 보자.
 
 keycloak을 설치하고, ingress 를 셋업한다.
+
+설치는.. 아래 설치는 최신 차트버전 9.0.1 로 설치했던 건데 고생을 심하게 해서
+최근 설치는 다음과 같이 예전 버전으로 설치했다.
+다른 페이지에 있는 설치본이 이 버전임  
+```
+$ helm install -n mta-infra keycloak --version 8.2.2 -f keycloak-values-8.2.2.yaml codecentric/keycloak
+```
+
 설치 과정은 다른 페이지에 있으니가 생략하고 인그레스만 보이면:
 ```
 $ cat keycloak-ing.yaml
