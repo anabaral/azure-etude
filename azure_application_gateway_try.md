@@ -1207,19 +1207,24 @@ $ cat keycloak-ing.yaml
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: keycloak-ingress
-  namespace: mta-infra
   annotations:
     kubernetes.io/ingress.class: azure/application-gateway
+    appgw.ingress.kubernetes.io/ssl-redirect: "true"
+  name: keycloak-ingress
+  namespace: mta-infra
 spec:
+  tls:
+  - hosts:
+    - azure-keycloak.skmta.net
+    secretName: mta-infra-tls
   rules:
-  - http:
+  - host: azure-keycloak.skmta.net
+    http:
       paths:
       - backend:
           serviceName: keycloak-http
-          servicePort: 80
-        path: /
-    host: azure-keycloak.skmta.net
+          servicePort: http
+        path: /*
 ```
 
 근데 설치가 잘 안되네?
