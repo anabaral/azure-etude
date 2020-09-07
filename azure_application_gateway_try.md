@@ -1385,6 +1385,37 @@ $ kubectl logs -n default ag-ingress-controller-ingress-azure-54474ffd4b-87kws |
 E0819 06:53:37.405949       1 client.go:170] Code="ErrorApplicationGatewayUnexpectedStatusCode" Message="Unexpected status code '401' while performing a GET on Application Gateway." InnerError="network.ApplicationGatewaysClient#Get: Failure responding to request: StatusCode=401 -- Original Error: autorest/azure: Service returned an error. Status=401 Code="AuthenticationFailed" Message="Authentication failed. The 'Authorization' header is missing.""
 ```
 
+## 원래 있는 리소스에 합칠 수 없나?
+
+일단 원래 있는 리소스와 현재 설정이 충돌되는 부분이 없도록 최대한 맞춘다. 이를테면
+```
+aks_name = "myAKSCluster"
+virtual_network_name = "aks-vnet-21253863"
+virtual_network_address_prefix = "10.0.0.0/8"
+aks_subnet_name = "aks-subnet"
+aks_subnet_address_prefix = "10.240.0.0/16"
+app_gateway_name = "ApplicationGateway1"
+app_gateway_subnet_address_prefix = "10.241.0.0/16"
+```
+등 기존 정보와 최대한 맞춰 입력한다.
+
+그리고 나서 겹침이 발생하는 리소스를 불러와서 -- 내 경우에는 virtual network 과 그 subnet들 -- 이를 맞출 수 있는 것 같음.
+```
+$ terraform import azurerm_virtual_network.test <Virtual_Network_의_resource_id>
+```
+리소스 id 는 대략 ``` /subscriptions/3ac347d8-a7...<구독ID>...9189283/resourceGroups/MC_04226_myAKSCluster_koreacentral/providers/Microsoft.Network/virtualNetworks/aks-vnet-21253863``` 과 같이 나타내어진다.
+```
+내 경우엔 그러고도 application gateway 용 subnet 이 없기 때문에 중간단게를 밟아 주어야 했음
+```
+$ terraform plan -out out.plan -target azurerm_virtual_network.test
+$ terraform apply out.plan
+```
+이렇게 하면 일단 subnet이 추가됨
+그리고 다시 전체
+```
+$ terraform plan -out out.plan
+$ terraform apply out.plan
+```
 
 ## 삭제는?
 
