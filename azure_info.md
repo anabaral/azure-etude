@@ -20,3 +20,14 @@ AddressPrefix    Name     PrivateEndpointNetworkPolicies    PrivateLinkServiceNe
 10.2.0.0/24      default  Enabled                           Enabled                              Succeeded            04226
 ```
 
+## storage account 확인
+
+```
+# 먼저 이름만 보자
+$ az storage account list | jq '.[].name'  # 필터링 안하면 엄청 양이 많음
+...
+"04226diag"
+...
+$ az storage account show -n 04226diag   # 내 것만 보자
+```
+
