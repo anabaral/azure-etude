@@ -437,8 +437,8 @@ $ az storage container create -n tfstate --account-name 04226diag --account-key 
 ## 테라폼 초기화 시도 
 (참조: https://docs.microsoft.com/ko-kr/azure/aks/update-credentials )
 
-Service Principal 관련 정보를 먼저 얻고 이를 이용해 초기화함 (Service Principal은 한글로 서비스 주체 라고 부름)
-다음은 
+Service Principal 관련 정보를 먼저 얻고 (Service Principal은 한글로 서비스 주체 라고 부름)
+이 작업은 화면에서 하는 방법은 여기 소개: https://docs.microsoft.com/ko-kr/azure-stack/operator/azure-stack-create-service-principals?view=azs-2005#create-a-service-principal-that-uses-a-client-secret-credential
 ```
 $ SUBSCRIPTION=$(az account show --query id -o tsv)
 $ az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION}"
@@ -455,6 +455,10 @@ Creating a role assignment under the scope of "/subscriptions/3ac347d8-a75f-4611
 $ OBJECT_ID=$(az ad sp list --display-name azure-cli-2020-08-20-12-32-01 | jq -r '.[].objectId')
 53fbda23-9e1e-4d74-949a-06d3200e36f9
 
+```
+
+이 정보를 가지고 초기화용 변수 파일을 작성하고
+```
 # 파일 작성
 $ vi terraform.tfvars
 aks_name = "myAKSCluster"  # 이 라인은 참조처에는 없는데 필요함. 지정하지 않으면 variables.tf 에 있는 기본값 "aks-cluster1" 이 들어감.
