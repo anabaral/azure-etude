@@ -12,10 +12,28 @@ aws 쪽에서 잘 설치해 왔던 keycloak을 설치하되, service.type=LoadBa
 ```
 $ kubectl get sc
 NAME                PROVISIONER                AGE
-azurefile           kubernetes.io/azure-file   3h20m  # 되긴 하는데.. 왜 소유자가 root야??
+azurefile           kubernetes.io/azure-file   3h20m  # 되긴 하는데.. 왜 소유자가 root야?? initContainer chown 명령도 안먹고..
 azurefile-premium   kubernetes.io/azure-file   3h20m
 default (default)   kubernetes.io/azure-disk   3h15m  # 이것은 둘 이상의 pod에서 접근 불가함
 managed-premium     kubernetes.io/azure-disk   3h15m  # 이것은 둘 이상의 pod에서 접근 불가함
+
+$ vi keycloak-sc.yaml
+allowVolumeExpansion: true
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  labels:
+    kubernetes.io/cluster-service: "true"
+  name: azurefile-keycloak
+parameters:
+  skuName: Standard_LRS
+provisioner: kubernetes.io/azure-file
+reclaimPolicy: Delete
+mountOptions:
+  - uid=1000
+  - gid=1000
+volumeBindingMode: Immediate
+
 
 $ vi keycloak-pvc-9.0.1.yaml
 apiVersion: v1
@@ -26,7 +44,7 @@ metadata:
     app: keycloak
   namespace: mta-infra
 spec:
-  storageClassName: azurefile
+  storageClassName: azurefile-keycloak # 새로만든 걸로
   accessModes:
     - ReadWriteOnce
   resources:
@@ -41,7 +59,7 @@ metadata:
     app: keycloak
   namespace: mta-infra
 spec:
-  storageClassName: azurefile
+  storageClassName: azurefile-keycloak # 새로만든 걸로
   accessModes:
     - ReadWriteOnce
   resources:
@@ -56,7 +74,7 @@ metadata:
     app: keycloak
   namespace: mta-infra
 spec:
-  storageClassName: azurefile
+  storageClassName: azurefile-keycloak # 새로만든 걸로
   accessModes:
     - ReadWriteOnce
   resources:
@@ -107,6 +125,33 @@ $ kubectl create -f keycloak-pvc-9.0.1.yaml
 $ helm install keycloak -n mta-infra -f keycloak-values-9.0.1.yaml codecentric/keycloak
 
 # 다 뜬 후에
+$ kubectl edit sts keycloak
+... initContainers 에 추가 ...
+      - command:
+        - chown
+        - -R
+        - 1000:1000
+        - /opt/jboss/keycloak/standalone/data
+        - /opt/jboss/keycloak/standalone/configuration
+        - /opt/jboss/keycloak/themes
+        image: alpine:3
+        imagePullPolicy: IfNotPresent
+        name: chown
+        resources: {}
+        securityContext:
+          runAsNonRoot: false
+          runAsUser: 0
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/jboss/keycloak/standalone/data
+          name: data
+        - mountPath: /opt/jboss/keycloak/standalone/configuration
+          name: conf
+        - mountPath: /opt/jboss/keycloak/themes
+          name: theme
+
+# 다시 뜬 후에
 $ kubectl exec -it keycloak-0 -- bash
 bash-4.4$ cd /opt/jboss/keycloak/bin
 bash-4.4$ sh add-user-keycloak.sh -r master -u admin
@@ -116,7 +161,10 @@ bash-4.4$ cd /opt/jboss/keycloak/standalone/
 bash-4.4$ ls
 configuration  configuration_temp  data  deployments  lib  log  tmp  # 위에 configuration_temp 라고 설정한 이유
 bash-4.4$ cp -a configuration/* configuration_temp/command
-... 권한에 따라 뭔가 에러가 날 수 있음. 복사가 잘 되었는지 확인 필요 ...
+# storageclass를 azurefile로 쓸 경우 여기서 권한 문제 날 수 있음..
+
+# 끝나고 configuration_temp --> configuration 으로 다시 마운트
+$ kubectl edit sts keycloak
 ```
 
 
