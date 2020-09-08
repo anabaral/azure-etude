@@ -96,6 +96,7 @@ extraVolumeMounts: |
 
 설치...
 ```
+$ kubectl create -f keycloak-pvc-9.0.1.yaml
 $ helm install keycloak -n mta-infra -f keycloak-values-9.0.1.yaml codecentric/keycloak
 ```
 이후에 몇 가지 위에 적힌 것처럼 해줘야 하는 부분이 있는데 이건 겪어보면 암...
