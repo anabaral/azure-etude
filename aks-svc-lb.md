@@ -10,6 +10,13 @@ aws 쪽에서 잘 설치해 왔던 keycloak을 설치하되, service.type=LoadBa
 
 그것 외에도 (버전 변경과 함께) 몇 가지 바뀐 점이 있어서 설명
 ```
+$ kubectl get sc
+NAME                PROVISIONER                AGE
+azurefile           kubernetes.io/azure-file   3h20m
+azurefile-premium   kubernetes.io/azure-file   3h20m
+default (default)   kubernetes.io/azure-disk   3h15m  # 이것은 둘 이상의 pod에서 접근 불가함
+managed-premium     kubernetes.io/azure-disk   3h15m  # 이것은 둘 이상의 pod에서 접근 불가함
+
 $ vi keycloak-pvc-9.0.1.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -19,7 +26,7 @@ metadata:
     app: keycloak
   namespace: mta-infra
 spec:
-  storageClassName: default  # 이것 default 말고 다른 걸로 바꿔야 함. 둘 이상의 pod에서 접근 불가
+  storageClassName: azurefile
   accessModes:
     - ReadWriteOnce
   resources:
@@ -34,7 +41,7 @@ metadata:
     app: keycloak
   namespace: mta-infra
 spec:
-  storageClassName: default  # 이것 default 말고 다른 걸로 바꿔야 함. 둘 이상의 pod에서 접근 불가
+  storageClassName: azurefile
   accessModes:
     - ReadWriteOnce
   resources:
@@ -49,7 +56,7 @@ metadata:
     app: keycloak
   namespace: mta-infra
 spec:
-  storageClassName: default  # 이것 default 말고 다른 걸로 바꿔야 함. 둘 이상의 pod에서 접근 불가
+  storageClassName: azurefile
   accessModes:
     - ReadWriteOnce
   resources:
