@@ -110,7 +110,7 @@ extraVolumeMounts: |
     name: data
   - mountPath: /opt/jboss/keycloak/standalone/configuration_temp
     name: conf
-  - mountPath: /opt/jboss/keycloak/themes
+  - mountPath: /opt/jboss/keycloak/themes_temp
     name: theme
 # keycloak chart 9.x 는 admin 사용자조차 로컬 접속해서 추가 후 재시작하는 방식으로 설정하는데
 # 하필 재시작 시 생성되게 만드는 파일이 /opt/jboss/keycloak/standalone/configuration 에
@@ -125,33 +125,6 @@ $ kubectl create -f keycloak-pvc-9.0.1.yaml
 $ helm install keycloak -n mta-infra -f keycloak-values-9.0.1.yaml codecentric/keycloak
 
 # 다 뜬 후에
-$ kubectl edit sts keycloak
-... initContainers 에 추가 ...
-      - command:
-        - chown
-        - -R
-        - 1000:1000
-        - /opt/jboss/keycloak/standalone/data
-        - /opt/jboss/keycloak/standalone/configuration
-        - /opt/jboss/keycloak/themes
-        image: alpine:3
-        imagePullPolicy: IfNotPresent
-        name: chown
-        resources: {}
-        securityContext:
-          runAsNonRoot: false
-          runAsUser: 0
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /opt/jboss/keycloak/standalone/data
-          name: data
-        - mountPath: /opt/jboss/keycloak/standalone/configuration
-          name: conf
-        - mountPath: /opt/jboss/keycloak/themes
-          name: theme
-
-# 다시 뜬 후에
 $ kubectl exec -it keycloak-0 -- bash
 bash-4.4$ cd /opt/jboss/keycloak/bin
 bash-4.4$ sh add-user-keycloak.sh -r master -u admin
@@ -163,7 +136,11 @@ configuration  configuration_temp  data  deployments  lib  log  tmp  # 위에 co
 bash-4.4$ cp -a configuration/* configuration_temp/command
 # storageclass를 azurefile로 쓸 경우 여기서 권한 문제 날 수 있음..
 
-# 끝나고 configuration_temp --> configuration 으로 다시 마운트
+# 아직 나가지 말고
+$ cd /opt/jboss/keycloak/
+$ cp -a themes/* themes_temp/
+
+# 끝나고 configuration_temp --> configuration 으로 다시 마운트, themes_temp --> themes 로 다시 마운트
 $ kubectl edit sts keycloak
 ```
 
