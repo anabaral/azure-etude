@@ -12,7 +12,7 @@ aws 쪽에서 잘 설치해 왔던 keycloak을 설치하되, service.type=LoadBa
 ```
 $ kubectl get sc
 NAME                PROVISIONER                AGE
-azurefile           kubernetes.io/azure-file   3h20m
+azurefile           kubernetes.io/azure-file   3h20m  # 되긴 하는데.. 왜 소유자가 root야??
 azurefile-premium   kubernetes.io/azure-file   3h20m
 default (default)   kubernetes.io/azure-disk   3h15m  # 이것은 둘 이상의 pod에서 접근 불가함
 managed-premium     kubernetes.io/azure-disk   3h15m  # 이것은 둘 이상의 pod에서 접근 불가함
@@ -105,8 +105,20 @@ extraVolumeMounts: |
 ```
 $ kubectl create -f keycloak-pvc-9.0.1.yaml
 $ helm install keycloak -n mta-infra -f keycloak-values-9.0.1.yaml codecentric/keycloak
+
+# 다 뜬 후에
+$ kubectl exec -it keycloak-0 -- bash
+bash-4.4$ cd /opt/jboss/keycloak/bin
+bash-4.4$ sh add-user-keycloak.sh -r master -u admin
+Password:
+Added 'admin' to ...
+bash-4.4$ cd /opt/jboss/keycloak/standalone/
+bash-4.4$ ls
+configuration  configuration_temp  data  deployments  lib  log  tmp  # 위에 configuration_temp 라고 설정한 이유
+bash-4.4$ cp -a configuration/* configuration_temp/command
+... 권한에 따라 뭔가 에러가 날 수 있음. 복사가 잘 되었는지 확인 필요 ...
 ```
-이후에 몇 가지 위에 적힌 것처럼 해줘야 하는 부분이 있는데 이건 겪어보면 암...
+
 
 아무튼 확인.
 ```
