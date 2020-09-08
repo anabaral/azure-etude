@@ -141,7 +141,8 @@ $ curl keycloak.koreacentral.cloudapp.azure.com
 </html>
 ```
 
-
+azure는 ingress-controller 별도 설치를 한 거라서 그런지 모르지만 
+최소한 다른 CSP와 달리 ssl-redirect 는 간단하게 되네요.
 
 
 
