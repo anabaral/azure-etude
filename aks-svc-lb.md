@@ -10,6 +10,54 @@ aws 쪽에서 잘 설치해 왔던 keycloak을 설치하되, service.type=LoadBa
 
 그것 외에도 (버전 변경과 함께) 몇 가지 바뀐 점이 있어서 설명
 ```
+$ vi keycloak-pvc-9.0.1.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keycloak-storage-data
+  labels:
+    app: keycloak
+  namespace: mta-infra
+spec:
+  storageClassName: default  # 이것 default 말고 다른 걸로 바꿔야 함. 둘 이상의 pod에서 접근 불가
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keycloak-storage-theme
+  labels:
+    app: keycloak
+  namespace: mta-infra
+spec:
+  storageClassName: default  # 이것 default 말고 다른 걸로 바꿔야 함. 둘 이상의 pod에서 접근 불가
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keycloak-storage-config
+  labels:
+    app: keycloak
+  namespace: mta-infra
+spec:
+  storageClassName: default  # 이것 default 말고 다른 걸로 바꿔야 함. 둘 이상의 pod에서 접근 불가
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
+
+
 $ vi keycloak-values-9.0.1.yaml
 replicas: 2
 postgresql:
