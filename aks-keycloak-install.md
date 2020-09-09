@@ -164,3 +164,8 @@ $ kubectl edit sts keycloak
 ```
 
 정상 접속 되는지 확인해 보자.
+
+근데.. 뭐지 이 멍청한 결과는..
+(구글크롬 자바스크립트 콘솔창)
+![구글크롬_자바스크립트_콘솔창](https://github.com/anabaral/azure-etude/blob/master/img/keycloak_error_https.png?raw=true)
+자기가 http 포함시켜 놓고 못 읽게 하네..
