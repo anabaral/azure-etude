@@ -1400,11 +1400,15 @@ app_gateway_subnet_address_prefix = "10.241.0.0/16"
 등 기존 정보와 최대한 맞춰 입력한다.
 
 그리고 나서 겹침이 발생하는 리소스를 불러와서 -- 내 경우에는 virtual network 과 그 subnet들 -- 이를 맞출 수 있는 것 같음.
+
 ```
 $ terraform import azurerm_virtual_network.test <Virtual_Network_의_resource_id>
 ```
-리소스 id 는 대략 ``` /subscriptions/3ac347d8-a7...<구독ID>...9189283/resourceGroups/MC_04226_myAKSCluster_koreacentral/providers/Microsoft.Network/virtualNetworks/aks-vnet-21253863``` 과 같이 나타내어진다.
-```
+
+리소스 id 는 대략 
+``` /subscriptions/3ac347d8-a7...<구독ID>...9189283/resourceGroups/MC_04226_myAKSCluster_koreacentral/providers/Microsoft.Network/virtualNetworks/aks-vnet-21253863 ``` 
+과 같이 나타내어진다.
+
 내 경우엔 그러고도 application gateway 용 subnet 이 없기 때문에 중간단게를 밟아 주어야 했음
 ```
 $ terraform plan -out out.plan -target azurerm_virtual_network.test
