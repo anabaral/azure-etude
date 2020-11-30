@@ -1,28 +1,103 @@
 # AKS setup 방법
 
+여기서는 
+- VM에 AKS용 배스천 역할을 할 수 있도록 셋업을 하고 
+- AKS를 생성 및 몇 가지 정보를 확인하는
+
+방법을 기술합니다.
+
 사실 거의 대부분의 내용은 여기 참조 : https://docs.microsoft.com/ko-kr/azure/aks/kubernetes-walkthrough
 
-## azure cli 설치
-여러 방법이 있으나 가장 간단한(?) 방법을 사용해 보자.
+
+## bastion setup
+
+먼저 다음을 가정합니다:
+- bastion 역할을 할 VM 은 있음
+- OS는 Ubuntu
+- 거기서 sudo 가능한 계정으로 로그인 했음
+
+### azure cli 설치
+
+여러 방법으로 설치 가능한데 두 가지 정도 소개
+
+- 가장 간단한(?) 방법은
 ```
 $ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 ```
 
-## 로그인
-로그인 명령을 입력하면 브라우저로 2차인증을 하도록 유도됨.
+- apt를 통해 관리하고 싶다면 
+```
+# Ubuntu 가정
+$ sudo apt-get update
+$ sudo apt-get install ca-certificates curl apt-transport-https lsb-release gnupg
+$ curl -sL https://packages.microsoft.com/keys/microsoft.asc | \
+           gpg --dearmor | \
+           sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+$ AZ_REPO=$(lsb_release -cs)
+$ echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
+       sudo tee /etc/apt/sources.list.d/azure-cli.list
+$ sudo apt-get install azure-cli
+```
+
+### kubectl 설치
+
+- 그냥 쉘로 설치하려면
+```
+$ curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+$ chmod +x ./kubectl
+$ sudo mv ./kubectl /usr/local/bin/kubectl
+```
+
+- apt 로 관리하고 싶다면
+```
+$ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+$ echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+$ sudo apt-get update
+$ sudo apt-get install -y kubectl
+```
+
+### helm 설치
+
+웬만한 오픈소스 어플리케이션 하나 이상 설치하려면 어차피 쓰게 되니까 설치하는 걸 권장
+```
+$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+$ chmod 700 get_helm.sh
+$ sudo ./get_helm.sh
+```
+
+### docker 설치
+
+컨테이너 이미지를 만들려면 필요하니까 설치하는 걸 권장.
+```
+$ sudo apt-get update
+$ sudo apt-get remove docker docker-engine docker.io # 이미 깔려 있다면 지우기 위해
+$ sudo apt install docker.io
+$ sudo systemctl enable docker
+$ sudo systemctl start docker
+```
+
+### Azure 로그인
+로그인 명령을 입력하면 브라우저로 2차인증을 하도록 유도됩니다.
 ```
 $ az login
 To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code GSY5H99NS to authenticate.
 ```
 
+여기까지 하면 배스천에서 필요한 작업은 끝난 것 같습니다.
+
 ## 그룹 만들기 
-내가 받은 테스트용 계정에는 이미 04226 이라는 그룹이 있으므로 생략하지만 일단 명령어는 기억해 두자
+
+내가 쓸 그룹을 만들 명령어. 상황에 따라 이미 있어 불필요할 지 모르나 일단 명령어는 기억해 둡시다.
 ```
 $ az group create --name myresourcegroup --location koreacentral
 ```
 
-## aks cluster 생성
-명령은 간단히 실행된다. 나중에 node-count 변경하는 방법을 찾아봐야 할 텐데.. 
+
+
+## AKS 설치 및 설정
+
+### 클러스터 생성
+명령은 간단히 실행됩니다. 나중에 node-count 변경하는 방법을 찾아봐야 할 텐데.. 
 그리고 메시지를 보면 키를 따로 저장해 두어야 할 필요도 있어 보이는데, 왜 키를 생성해야 하는지는 현 시점에선 모르겠다. AKS 노드에 직접 접근하기 위한 키인가?
 ```
 $ az aks create --resource-group 04226 --name myAKSCluster --node-count 1 --enable-addons monitoring --generate-ssh-keys
@@ -137,14 +212,10 @@ SSH key files '/home/azureuser/.ssh/id_rsa' and '/home/azureuser/.ssh/id_rsa.pub
 }
 ```
 
-## kubectl 설치
-kubectl 등을 설치해야 제어가 가능하니 설치. 이 때 배스천의 /usr/local/bin/ 을 건드려야 하니 sudo 필요.
-```
-$ sudo az aks install-cli
-```
 
-## kubectl 권한 셋업
-config를 받아오는 명령이 따로 있다.
+### kubectl 권한 셋업
+
+클러스터로부터 필요한 권한과 config를 받아오는 명령이 따로 있습니다.
 ```
 $ az aks get-credentials --resource-group 04226 --name myAKSCluster
 
@@ -157,30 +228,14 @@ NAME                                STATUS   ROLES   AGE   VERSION
 aks-nodepool1-21253863-vmss000000   Ready    agent   15m   v1.16.13
 ```
 
-## cluster 정보 얻기
+### cluster 정보 얻기
 이걸 실행하면 아까 클러스터 생성할 때 출력되었던 내용이 다시 찍힌다.
 ```
 $ az aks show --resource-group 04226 --name myAKSCluster
 ```
 
-## docker 설치
-아까 했어야 했던 일인데, docker가 없는 걸 지금 깨달았다..
-```
-$ sudo apt install docker.io
-Reading package lists... Done
-(생략)
-Setting up docker.io (19.03.6-0ubuntu1~18.04.1) ...
-Adding group `docker' (GID 116) ...
-Done.
-Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /lib/systemd/system/docker.socket.
-docker.service is a disabled or a static unit, not starting it.
-Processing triggers for systemd (237-3ubuntu10.41) ...
-Processing triggers for man-db (2.8.3-2ubuntu0.1) ...
-Processing triggers for ureadahead (0.100.0-21) ...
-```
-서비스 시작은 수동으로 해야 하나봄. 뭐 배스천에서는 이미지 빌드만 하게 될테니까..
 
-## 클러스터 업그레이드
+### 클러스터 업그레이드
 
 다음과 같이 업그레이드 가능 버전을 확인.
 ```
@@ -212,7 +267,7 @@ Client Version: version.Info{Major:"1", Minor:"18", GitVersion:"v1.18.6", GitCom
 Server Version: version.Info{Major:"1", Minor:"17", GitVersion:"v1.17.7", GitCommit:"5737fe2e0b8e92698351a853b0d07f9c39b96736", GitTreeState:"clean", BuildDate:"2020-06-24T19:54:11Z", GoVersion:"go1.13.6", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
-## 클러스터 노드 개수 조정
+### 클러스터 노드 개수 조정
 
 azure 클러스터는 노드풀 이란 걸 가지고 있는데, 이게 AWS에서의 스케일링 그룹과 비슷한 역할을 합니다.
 ```
@@ -234,7 +289,7 @@ $
 
 
 
-## 클러스터 삭제
+### 클러스터 삭제
 ```
 $ az aks delete --resource-group 04226 --name myAKSCluster 
 Are you sure you want to perform this operation? (y/n): y
