@@ -1,10 +1,11 @@
 # AKS 에서의 Load Balancer 사용 방식들
 
-AKS 에서 Load Balancer 사용하는 방법은 다음과 같이 정리할 수 있다:
+AKS 에서 Load Balancer 사용하는 방법은 다음과 같이 세 가지로 나눌 수 있다:
 
 ![K8s에서의 Load Balancer](https://github.com/anabaral/azure-etude/blob/master/img/k8s-lb-1.svg)
 
-- 그림 왼쪽, 서비스 타입을 LoadBalancer로 설정하면 어느 포트를 잡아서 그 포트로 접속하면 서비스를 접근할 수 있다.
+- 그림 왼쪽, 서비스 타입을 LoadBalancer로 설정하면 어느 포트를 잡아서 그 포트로 접속하면 서비스를 접근할 수 있다.  
+  클러스터 통틀어 하나의 서비스만 사용한다면 80/443 포트를 서비스하면 되겠다.
 - 그림 중간, 여러 서비스를 하나의 포트로 서비스할 때 Google 사이트에서 제공하는 kubernetes-ingress 서비스를 설치해 사용한다.  
   (https://github.com/kubernetes/ingress-nginx 참조)  
   이러면 80/443 포트로 접근하게 하고  Ingress 설정과 요청 경로에 따라 서로 다른 서비스로 분기시킨다.
