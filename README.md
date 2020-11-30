@@ -4,7 +4,7 @@
 
 일단 AKS 를 건드려 봅시다.
 
-클러스터를 만드는 방법은 아래 링크에 소개:
+배스천을 설정하고 클러스터를 만드는 방법은 아래 링크에 소개:
 
 [AKS 셋업](https://github.com/anabaral/azure-etude/blob/master/aks-setup.md)
 
