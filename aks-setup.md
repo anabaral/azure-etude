@@ -63,7 +63,10 @@ $ sudo apt-get install -y kubectl
 $ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
 $ chmod 700 get_helm.sh
 $ sudo ./get_helm.sh
+$ helm version
 ```
+마지막 버전체크나 다른 명령어를 실행할 때 응답이 없는 경우가 있는데, ```--debug``` 옵션을 써서 체크해 봅시다.  
+제 경우에는 이상하게도(?) ```$HOME/.config``` 디렉터리가 root 소유로 되어 있어 건드리지 못한 적이 있습니다.
 
 ### docker 설치
 
