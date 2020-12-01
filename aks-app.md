@@ -52,10 +52,36 @@ https://github.com/anabaral/aws-etude/blob/master/nodejs-etude.md
 $ kubectl get deploy -n selee mynode -o yaml | less
 ```
 
+## 브라우저 확인
+
+번듯하게보다는 좀 쉬운 쪽으로 브라우저 접근을 해 보겠습니다.  
+가장 쉬운 방법은 위의 [nodejs-etude](https://github.com/anabaral/aws-etude/blob/master/nodejs-etude.md) 링크에 있는, 즉 내 PC에 kubectl 을 설치하고 port-forward 하는 방법이지만 그것보다는 좀더 운영환경에 가깝게..
+
+```
+$ kubectl edit svc -n selee mynode # 다음만 수정합니다
+spec:
+...
+  type: ClusterIP --> LoadBalancer 로 수정
+
+$ kubectl get svc -n selee
+NAME             TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)        AGE
+mynode           LoadBalancer   10.0.10.218    40.82.137.156   80:30254/TCP   95m  # 외부 IP가 생기고 포트 80이 열림
+mynode-mongodb   ClusterIP      10.0.115.134   <none>          27017/TCP      95m
+```
+
+이제 ```40.82.137.156:80 ``` 으로 접속하면 페이지가 나옵니다.  
+이게 첫 화면(Readme.md)에서 소개했던 서비스하는 방식 첫번째 입니다.
+
+## DNS 연결
+
+이걸 한 번 domain name 으로 접근 가능하게 해보겠습니다.
+
+(작성 중)
+
 ## 이미지 바꿔보기
 
 디플로이 구조를 잘 뜯어보면 다음을 알 수 있습니다:
-- 실행 컨테이너는 node라는 이름의 하나인데 초기화컨테이너(initContainer) 라는 것도 실행됨
+- 실행 컨테이너는 node라는 이름의 하나인데 초기화컨테이너(initContainer) 라는 것도 두 개가 실행됨(git-clone-repository, npm-install)
 - 두 컨테이너는 이미지가 다르기 때문에 서로 다른 공간을 쓰지만  
   /app 디렉터리를 공유하고 있음(mountPath 항목)  
   사실 같은 pod 내의 컨테이너들은 네트워크도 공유함. (127.0.0.1 의 포트만 나눠가지는 식으로) 
@@ -63,6 +89,22 @@ $ kubectl get deploy -n selee mynode -o yaml | less
   * 이 방식은 나름 편리한데 우리는 커스텀 이미지를 만드는 실습을 할 거기 때문에 이걸 변형할 생각입니다.
   * 즉 초기화컨테이너를 없애는 대신 /app 에 들어갈 내용을 직접 새 이미지에 부어 배포할 겁니다.
 
+다음을 수행합니다:
+```
+$ mkdir build
+$ cd build
+$ git clone https://github.com/bitnami/sample-mean.git --branch master  # deploy 초기화컨테이너 선언에 포함되었던 명령 응용
+```
+
+Dockerfile 작성
+```
+$ vi Dockerfile
+FROM docker.io/bitnami/node:14.15.1-debian-10-r8
+
+ADD sample-mean /app
+
+```
+이렇게만 해도 이미지는 만들어집니다. 물론 빌드하고 그 결과를 Registry에 부어넣어야 쓸 수 있겠죠.
 
 
 
