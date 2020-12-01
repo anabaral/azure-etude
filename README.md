@@ -29,6 +29,8 @@ K8S에서 어플리케이션은 대략 다음을 구성해야 합니다. 경우�
 - 이미지의 파일구조가 그대로 컨테이너의 파일구조가 되는데, 여기 무언가 쓸 수 있지만 Pod가 종료하면 내용을 잃어버립니다.
 - 그래서 영구저장을 위한 스토리지가 필요하고, Persistent Volume 이나 Persistent Volume Claim 의 구성이 필요합니다.
 
+이 관련해서는 다음 링크를 참조합시다:  
+[AKS 에서 어플리케이션 ](https://github.com/anabaral/azure-etude/blob/master/aks-app.md)
 
 ### AKS에서 서비스를 외부 연결
 
