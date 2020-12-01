@@ -99,7 +99,38 @@ $ az group create --name myresourcegroup --location koreacentral
 ### 클러스터 생성
 명령은 간단히 실행됩니다. 권한만 있다면..
 
-그리고 메시지를 보면 키를 따로 저장해 두어야 할 필요도 있어 보이는데, 왜 키를 생성해야 하는지는 현 시점에선 모르겠다. AKS 노드에 직접 접근하기 위한 키인가?
+권한이 없다면 다음과 같은 에러가 날 겁니다.
+```
+$ az ad app list   # 보는 것조차 안됨
+Insufficient privileges to complete the operation.
+```
+
+권한을 부여하려면 "그 리소스" 가 속한 테넌트에서 적절한 권한을 가진 이 (보통 관리자) 가 해당 계정을 초대하고(이미 했을테고) 그에게 어플리케이션 개발자 이상의 권한을 줘야 합니다. (이것은 커맨드로 하지 않고 Azure Active Directory 웹콘솔 화면에서 작업했습니다)  
+그러고 나면 같은 명령에 대해 엄청많은 리스트가 출력될 것입니다.
+
+먼저 Service Principal 을 만들고
+```
+$ az ad sp create-for-rbac --skip-assignment --name sp-aks-tuna
+{
+  "appId": "31....e9-ef5f-4754-b480-0c0........e",
+  "displayName": "sp-aks-tuna",
+  "name": "http://sp-aks-tuna",
+  "password": "TWlMWeIr.....................do328",
+  "tenant": "48....cb-891e-4986-8b6b-40c2.......f"
+}
+```
+위에서 appId 와 password 를 적어두었다가 다음 명령에 씁니다:
+```
+az aks create \
+    --resource-group rg-tuna \
+    --name aks-tuna \
+    --service-principal <appId> \
+    --client-secret <password> \
+    --node-count 1 --enable-addons monitoring --generate-ssh-keys
+```
+
+사실 다음과 같이 그냥 service principal 을 자동생성하게 해서 만들 수도 있음.
+
 ```
 $ az aks create --resource-group 04226 --name myAKSCluster --node-count 1 --enable-addons monitoring --generate-ssh-keys
 SSH key files '/home/azureuser/.ssh/id_rsa' and '/home/azureuser/.ssh/id_rsa.pub' have been generated under ~/.ssh to allow SSH access to the VM. If using machines without permanent storage like Azure Cloud Shell without an attached file share, back up your keys to a safe location
