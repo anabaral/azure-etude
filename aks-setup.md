@@ -97,7 +97,7 @@ $ az group create --name myresourcegroup --location koreacentral
 ## AKS 설치 및 설정
 
 ### 클러스터 생성
-명령은 간단히 실행됩니다. 권한만 있다면..
+명령은 간단히 실행됩니다. 권한만 있다면.. AD(Active Directory)를 건드릴 수 있는..
 
 권한이 없다면 다음과 같은 에러가 날 겁니다.
 ```
