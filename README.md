@@ -20,9 +20,10 @@ K8S에서 어플리케이션은 대략 다음을 구성해야 합니다. 경우�
 ![k8s에서의 Application](https://github.com/anabaral/azure-etude/blob/master/img/k8s-app.svg)
 
 - Deployment 혹은 Statefulset, Daemonset 의 형태로 어플리케이션 배포형태를 결정하고 배포기술파일을 작성해야 합니다.
-- Deployment 는 Pod 라는 형태로 인스턴스화 합니다.  
-  인스턴스라는 것은, java object instance나 VM instance 처럼 같은 게 여러 개 뜰 수 있다는 의미입니다. 보통 replica count 수로 이 개수를 조절합니다.
-- Pod는 여러 컨테이너로 구성되게 됩니다.
+- Deployment 든 무엇이었든 실제 서비스의 인스턴스화는 Pod 단위로 이루어집니다.  
+  인스턴스라는 것은, java object instance나 VM instance 처럼 동일한 것이 여러 개 뜰 수 있다는 의미입니다.  
+  보통 replica count 수로 이 개수를 늘려서 부하를 감당하거나 줄여서 비용을 절약합니다.
+- Pod는 여러 컨테이너로 구성 됩니다.
 - 컨테이너 각각에 대해 컨테이너 이미지가 필요합니다.  
   이미지는 이론적으로는 맨땅에서 만들 수도 있다고 하는데 보통은 기존의 이미지를 가져와 add-on 해서 만듭니다.
 - 이미지의 파일구조가 그대로 컨테이너의 파일구조가 되는데, 여기 무언가 쓸 수 있지만 Pod가 종료하면 내용을 잃어버립니다.
