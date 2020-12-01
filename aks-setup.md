@@ -98,16 +98,6 @@ $ az group create --name myresourcegroup --location koreacentral
 
 ### 클러스터 생성
 명령은 간단히 실행됩니다. 권한만 있다면..
-필요한 권한은 AD 에 Service Principal 을 생성하는 권한이라고 합니다. 다음 명령으로 권한을 부여합니다:
-```
-# 등록
-$ az provider register --namespace Microsoft.OperationalInsights
-$ az provider register --namespace Microsoft.OperationsManagement
-# 확인
-$ az provider show -n Microsoft.OperationalInsights -o table
-$ az provider show -n Microsoft.OperationsManagement -o table
-```
-권한을 스스로 부여한다는 점이 재밌네요. (신용카드 대신 현금카드 들고 다니는 심정인가)
 
 그리고 메시지를 보면 키를 따로 저장해 두어야 할 필요도 있어 보이는데, 왜 키를 생성해야 하는지는 현 시점에선 모르겠다. AKS 노드에 직접 접근하기 위한 키인가?
 ```
