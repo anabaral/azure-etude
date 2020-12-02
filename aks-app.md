@@ -199,6 +199,10 @@ Events:
 ```
 
 k8s 에서 pull 할 때 권한이 없다고 에러 납니다. 이건 이것대로 권한을 부여해야 합니다.  
-(작성중)
+미리 알았으면 처음에 ACR을 먼저 만들고 AKS를 만들 때 ```--attach-acr``` 옵션으로 연결했으면 되었는데 지금은 그렇게 못하니까 업데이트로 해야 합니다:  
+```
+$ az aks update -n aks-tuna -g rg-tuna --attach-acr tuna01
+```
+
 
 
