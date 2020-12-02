@@ -76,7 +76,13 @@ mynode-mongodb   ClusterIP      10.0.115.134   <none>          27017/TCP      95
 
 이걸 한 번 domain name 으로 접근 가능하게 해보겠습니다.
 
-(작성 중)
+디테일은 아직 작성 못하였는데 골자만 적으면 다음과 같습니다.
+- 처음에는 Azure Portal 화면에서 DNS영역 추가 했었는데 이걸 인지 못해서
+- freenom.com 에 접속해 (회원가입 아니면 소셜로그인) 무료 도메인을 얻음: tuna-az.ga
+- 무료 도메인에 레코드셋 추가, ip를 위의 EXTERNAL-IP 로 지정
+- 그러고도 인지 못하길래 (어쩌면 시간이 필요했는지도 모르지만) 도메인용 네임서버를 Azure에서 주는 네임서버로 세팅
+- 현재 www.tuna-az.ga 로 접속됨
+- 이 도메인은 3개월 한시적으로 얻은 거라 2021년 1분기 끝날 때쯤이면 없어집니다.
 
 ## 이미지 바꿔보기
 
@@ -101,12 +107,98 @@ Dockerfile 작성
 $ vi Dockerfile
 FROM docker.io/bitnami/node:14.15.1-debian-10-r8
 
+RUN npm install
 ADD sample-mean /app
-
 ```
 이렇게만 해도 이미지는 만들어집니다. 물론 빌드하고 그 결과를 Registry에 부어넣어야 쓸 수 있겠죠.
 
+이를 위해 Container Registry를 만들었습니다.  
+```tuna01.azurecr.io```  
 
+그리고 다음을 실행합니다.
+```
+$ az acr login -n tuna01
 
+$ VERSION=0.1
+$ docker build -t node-ex:${VERSION} .
+$ docker tag node-ex:0.1 tuna01.azurecr.io/node-ex:${VERSION}
+$ docker push tuna01.azurecr.io/node-ex:${VERSION}
+```
+
+나중에 조금 더 다듬어서 쉘로 실행하는 게 좋겠네요.
+결과를 확인하면 다음과 같습니다:
+```
+$ docker images
+REPOSITORY                  TAG                    IMAGE ID            CREATED             SIZE
+node-ex                     0.1                    3bebff9805e7        59 minutes ago      695MB
+tuna01.azurecr.io/node-ex   0.1                    3bebff9805e7        59 minutes ago      695MB
+bitnami/node                14.15.1-debian-10-r8   567c627a8cf7        5 days ago          695MB
+```  
+오해하지 말 것은, 위의 리스트는 배스천 서버에 남아있는 캐시를 토대로 보여주는 것입니다.  
+```docker rmi``` 등으로 위의 것들을 지워도 ACR에 push했던 이미지는 없어지지 않습니다.  
+반대로 ACR에서 이미지를 삭제해도 위의 캐시가 남아있기도 해서, 때로는 저걸 기반으로 다시 살리기도 합니다.
+
+이제 우리가 helm으로 설치했던 nodejs 가 우리가 만든 이미지로 다시 뜨도록 해 보죠:
+해야 할 것은
+- Deployment descriptor를 건드려서
+  * node 컨테이너의 이미지를 우리가 만든 이미지로 바꾸고
+  * git-clone-repository 초기화컨테이너는 없애고
+  * npm-install 초기화컨테이너도 없애고
+
+등입니다.
+이건 ``` kubectl edit deploy -n selee mynode ``` 명령어로 하기도 하는데, 우리는 백업을 만드는 겸 해서 다음과 같이 하겠습니다:
+```
+$ kubectl get deploy -n selee mynode -o yaml > selee.mynode-deploy.yaml
+$ vi selee.mynode-deploy.yaml
+...
+... metadata.resourceVersion 삭제
+... metadata.selfLink 삭제
+... metadata.uid 삭제
+...
+spec:
+  template:
+    spec:
+      containers:
+        #image: docker.io/bitnami/node:14.15.1-debian-10-r8
+        image: tuna01.azurecr.io/node-ex:0.1
+...
+#        volumeMounts:
+#        - mountPath: /app   # app은 주석처리
+...
+#      initContainers:
+#        이 이하는 모두 주석처리
+#      ...
+#        volumeMounts:
+#        - mountPath: /app
+#          name: app
+#        workingDir: /app     # 여기까지
+      volumes:
+#      - emptyDir: {}
+#        name: app            # app은 주석처리
+      - emptyDir: {}
+        name: data
+
+$ kubectl apply -f selee.mynode-deploy.yaml   # 작성된 것 적용
+```
+
+아직 한 문제가 남았습니다:
+```
+$ kubectl get po -n selee
+NAME                            READY   STATUS         RESTARTS   AGE
+mynode-58ccbb59b5-p5mnk         1/1     Running        3          18h
+mynode-688c75f6c7-zjl5d         0/1     ErrImagePull   0          27s   <--- 에러가 나네요?
+mynode-mongodb-bd8bd754-6g8j5   1/1     Running        0          18h
+
+$ kubectl describe po -n selee mynode-688c75f6c7-zjl5d
+...
+Events:
+  ...
+  Normal   Pulling    15s (x2 over 30s)  kubelet            Pulling image "tuna01.azurecr.io/node-ex:0.1"
+  Warning  Failed     15s (x2 over 29s)  kubelet            Failed to pull image "tuna01.azurecr.io/node-ex:0.1": rpc error: code = Unknown desc = Error response from daemon: Get https://tuna01.azurecr.io/v2/node-ex/manifests/0.1: unauthorized: authentication required, visit https://aka.ms/acr/authorization for more information.
+  Warning  Failed     15s (x2 over 29s)  kubelet            Error: ErrImagePull
+```
+
+k8s 에서 pull 할 때 권한이 없다고 에러 납니다. 이건 이것대로 권한을 부여해야 합니다.  
+(작성중)
 
 
