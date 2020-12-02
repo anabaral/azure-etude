@@ -326,7 +326,14 @@ $ az aks nodepool scale -g 04226 --cluster-name myAKS -n nodepool1 --node-count 
 Operation failed with status: 'Bad Request'. Details: The value of parameter agentPoolProfile.count is invalid. Please see https://aka.ms/aks-naming-rules for more details.
 $
 ```
-
+노드수를 0으로 주는 대신 AKS에서 제공하는 기능이 stop/start 입니다.  
+이를 위해서는 확장기능 설치를 해야 하는데 처음 명령을 실행하면 알아서 설치할까요? 라고 물어봐 줍니다. 
+```
+$ az aks stop -g rg-tuna -n aks-tuna
+The command requires the extension aks-preview. Do you want to install it now? The command will continue to run after the extension is installed. (Y/n):
+Run 'az config set extension.use_dynamic_install=yes_without_prompt' to allow installing extensions without prompt.
+The installed extension 'aks-preview' is in preview.
+```
 
 
 ### 클러스터 삭제
