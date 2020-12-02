@@ -79,6 +79,11 @@ $ sudo systemctl enable docker
 $ sudo systemctl start docker
 ```
 
+azureuser 가 docker 그룹에 포함되어 있어야 이후 sudo 없이 작업이 가능하므로 다음을 실행.
+```
+$ sudo usermod -G docker -a azureuser
+```
+
 ### Azure 로그인
 로그인 명령을 입력하면 브라우저로 2차인증을 하도록 유도됩니다.
 ```
