@@ -107,12 +107,13 @@ Dockerfile 작성
 $ vi Dockerfile
 FROM docker.io/bitnami/node:14.15.1-debian-10-r8
 
-RUN npm install
 ADD sample-mean /app
+RUN cd /app && npm install
 ```
-이렇게만 해도 이미지는 만들어집니다. 물론 빌드하고 그 결과를 Registry에 부어넣어야 쓸 수 있겠죠.
+주의할 것은 initContainer 들이 실행하는 순서대로 Dockerfile 에서도 실행되어야 합니다.
+여기서는 소스들이 먼저 존재해야 npm install 이 그 안의 파일을 읽기 때문에 중요합니다.
 
-이를 위해 Container Registry를 만들었습니다.  
+이제 빌드하고 그 결과를 AKS에서 읽을 수 있는 공용 Registry에 부어넣어야 하는데, 이를 위해 Container Registry가 필요합니다.  
 ```tuna01.azurecr.io```  
 
 그리고 다음을 실행합니다.
@@ -161,6 +162,8 @@ spec:
       containers:
         #image: docker.io/bitnami/node:14.15.1-debian-10-r8
         image: tuna01.azurecr.io/node-ex:0.1
+        #imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always          # <-- 이것 중요. 특히 시행착오 반복할 때는 필요함. 이게 IfNotPresent 면 이미지를 갱신해도 다시 읽지 않음.
 ...
 #        volumeMounts:
 #        - mountPath: /app   # app은 주석처리
@@ -202,7 +205,26 @@ k8s 에서 pull 할 때 권한이 없다고 에러 납니다. 이건 이것대�
 미리 알았으면 처음에 ACR을 먼저 만들고 AKS를 만들 때 ```--attach-acr``` 옵션으로 연결했으면 되었는데 지금은 그렇게 못하니까 업데이트로 해야 합니다:  
 ```
 $ az aks update -n aks-tuna -g rg-tuna --attach-acr tuna01
+AADSTS50076: Due to a configuration change made by your administrator, or because you moved to a new location, you must use multi-factor authentication to access '797f4846-ba00-4fd7-ba43-dac1f8f63013'.
+Trace ID: b501db49-5be5-418d-873f-233fa4fc0302
+Correlation ID: 45eab984-8a70-42e6-9a10-47c2fdfbe843
+Timestamp: 2020-12-02 06:23:00Z
 ```
+위와 같은 에러는 좀 특이한데, '797f4846-ba00-4fd7-ba43-dac1f8f63013' 이게 Azure Resource Manager의 식별자라네요. 즉 multi-factor 인증으로 자신을 증명하지 않은 상태에서는 ARM에 접근할 수 없다는 것입니다.
+이걸 별다른 노력 없이 해결하기 위해서는 Azure Active Directory 화면의 '속성' 메뉴로 가서 '보안 기본값 관리' 값을 '아니오'로 바꿔야 합니다.
+그건 좀 부담스럽죠. 그 대신 본인이 명시적으로 2-factor 인증을 성공시키는 걸로 하겠습니다.
+```
+$ az login --tenant 488c43cb-891e-4986-8b6b-40c2e5c7b87f   # 자신의 tenantId 를 입력. 이 옵션이 없으면 1-factor 인증으로 마치기도 함
+```  
+이렇게 하면 디바이스 코드 입력 외에 별도 메일로 전달되는 코드 입력까지 마쳐야 인증이 완료됩니다.
+
+인증이 성공하고 나면 다시 시도합니다.
+```
+$ az aks update -n aks-tuna -g rg-tuna --attach-acr tuna01
+... 다시 클러스터 정보 출력 ...
+```
+
+
 
 
 
