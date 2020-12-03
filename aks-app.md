@@ -122,7 +122,7 @@ $ az acr login -n tuna01
 
 $ VERSION=0.1
 $ docker build -t node-ex:${VERSION} .
-$ docker tag node-ex:0.1 tuna01.azurecr.io/node-ex:${VERSION}
+$ docker tag node-ex:${VERSION} tuna01.azurecr.io/node-ex:${VERSION}
 $ docker push tuna01.azurecr.io/node-ex:${VERSION}
 ```
 
@@ -237,4 +237,88 @@ $ az aks update -n aks-tuna -g rg-tuna --attach-acr tuna01
 이걸 가지고 Slack bot 이나 KakaoTalk Chatbot 을 만들어볼 겁니다.  
 (물론 Hello World 수준으로) 
 
+### kakao bot 연결
 
+아주 기초적인 것만 할 건데 일단 kakao bot을 쓰려면 신청을 해야 합니다. 신청하는 방법은 관련 페이지를 찾으면 되니 생략.  
+다음은 가장 기초적인 kakao bot 셋업을 위한 화면 캡처입니다:
+- 봇 설정 초기화면 : https://github.com/anabaral/azure-etude/blob/master/img/kakaobot_intro.png
+- 봇 시나리오 설정화면 : https://github.com/anabaral/azure-etude/blob/master/img/kakaobot_scenario.png
+- 봇 스킬 화면 : https://github.com/anabaral/azure-etude/blob/master/img/kakaobot_skill.png
+- 봇 스킬 상세화면 : https://github.com/anabaral/azure-etude/blob/master/img/kakaobot_skill_dtl.png
+화면이 큰 데 비해서 내용을 여기서 장황하게 설명하는 건 적절치 못한 것 같아 그림만 나열합니다.  
+
+중요한 것은 
+- 봇의 기본동작을 규정하는 데에 시나리오와 스킬이 필요하며,
+- 스킬에서 실제 구현 호출을 설정하는 반면 시나리오에서 기초적인 패턴을 잡고서 스킬을 어떻게 쓸 지 설정합니다. 
+- 스킬 상세, 즉 마지막 화면에서 API 호출 URL을 언급합니다.
+
+저는 가장 무식하게, ```http://www.tuna-az.ga/api``` 을 호출하는 걸로 잡았습니다.  
+그러면 카톡에서 무언가 칠 때 저 URL 로 적절한 JSON 형식의 메시지를 보낼 겁니다. (스킬 상세화면 밑에서 테스트도 할 수 있습니다)
+
+아까 위에서, git clone 한 위치를 기억하시나요? 아마 ```build/sample-mean``` 이런 경로였던 것 같은데, 그리로 이동합니다.
+그리고 다음 파일을 편집합니다.
+```
+$ vi app/routes.js
+```
+파일 밑으로 가면 ```    // application ------- ... ``` 이렇게 나온 라인이 보일 겁니다.  
+그 앞에 다음 로직을 추가하면 됩니다.
+
+```
+    // babo logic
+    app.post('/api', function (req, res) {
+        var reply = '너도 바보야';
+        var res_str = '{'
++ '    "version": "2.0", '
++ '    "template": { '
++ '      "outputs": [ '
++ '        { '
++ '          "simpleText": { '
++ '            "text": "' + reply.replace("\n", "\\n") +  '" '
++ '          } '
++ '        } '
++ '      ] '
++ '    } '
++ '}';
+        res.send(res_str);
+    });
+```
+
+저장하고 나와 build.sh 을 편집 및 실행합니다:
+```
+$ cd ..
+$ vi build.sh
+VERSION=0.2  # 버전만 바꿉니다.
+$ sh build.sh
+```
+
+이제 deployment 선언의 이미지를 변경할 차례입니다:
+```
+$ cd ..                        # 꼭 밑으로 가란 뜻이 아니라 deploy.yaml 파일을 찾아가면 됩니다
+$ vi selee.mynode-deploy.yaml
+...
+        image: tuna01.azurecr.io/node-ex:0.2
+...
+$ kubectl apply -f selee.mynode-deploy.yaml
+```
+
+명령을 반복적으로 실행해 파드가 교체되는 과정을 확인할 수 있습니다.
+```
+azureuser@vm-tuna-1:~/aks$ kubectl get po -n selee                 # 새로운 것이 뜨는 걸 확인
+NAME                            READY   STATUS    RESTARTS   AGE
+mynode-6575bd4457-55xfj         1/1     Running   3          6h49m
+mynode-74944d8696-lqn5k         0/1     Running   0          11s
+mynode-mongodb-bd8bd754-z67sk   1/1     Running   0          6h49m
+azureuser@vm-tuna-1:~/aks$ kubectl get po -n selee                # 기존 것이 죽음
+NAME                            READY   STATUS        RESTARTS   AGE
+mynode-6575bd4457-55xfj         0/1     Terminating   3          6h49m
+mynode-74944d8696-lqn5k         1/1     Running       0          14s
+mynode-mongodb-bd8bd754-z67sk   1/1     Running       0          6h49m
+azureuser@vm-tuna-1:~/aks$ kubectl get po -n selee                # 교체 완료
+NAME                            READY   STATUS    RESTARTS   AGE
+mynode-74944d8696-lqn5k         1/1     Running   0          38s
+mynode-mongodb-bd8bd754-z67sk   1/1     Running   0          6h49m
+```
+
+성공하면 카카오프렌즈와 다음과 같이 대화가 될 겁니다. 비록 한 가지 답 밖에 못하지만..
+
+![카카오봇이 응답](https://github.com/anabaral/azure-etude/blob/master/img/kakaobot_screen.png)
