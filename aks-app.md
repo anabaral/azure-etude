@@ -322,3 +322,13 @@ mynode-mongodb-bd8bd754-z67sk   1/1     Running   0          6h49m
 성공하면 카카오프렌즈와 다음과 같이 대화가 될 겁니다. 비록 한 가지 답 밖에 못하지만..
 
 ![카카오봇이 응답](https://github.com/anabaral/azure-etude/blob/master/img/kakaobot_screen.png)
+
+뭔가 소스를 수정한다면 다음 명령을 차례로 실행합니다.
+
+```
+$ sh build.sh 
+$ kubectl rollout restart deploy -n selee mynode   # 빌드는 성공했다고 가정하고 deploy를 안전 재시작
+
+$ kubectl get po -n selee    # 잘 떴는지 확인
+```
+
