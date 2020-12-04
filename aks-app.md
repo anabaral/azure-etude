@@ -1,4 +1,4 @@
-# nodejs 로 앱 하나 만들기
+# nodejs 로 앱 하나 만들기 (in AKS)
 
 Readme.md 문서에서 설명한 대로 Deployment Descriptor 파일을 작성해 뭔가 만들려면 상당히 고달픈 과정을 거쳐야 하므로 우리는 helm을 이용해 초기 셋업을 할 것입니다.
 
