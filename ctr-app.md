@@ -9,12 +9,28 @@ https://github.com/anabaral/azure-etude/blob/master/aks-app.md
 
 ## 컨테이너 이미지 만들기
 
-Dockerfile 제일 밑에 다음이 필요합니다. AKS에서는 Deployment 설정에 포함되어 있던 것입니다.
+### Dockerfile
+
+Dockerfile 제일 밑에 다음이 필요합니다. 
 ```
 ENTRYPOINT [ "/bin/bash", "-ec", "npm start" ]
 ```
 
-빌드 스크립트도 조정했습니다. 이름과 버전 바꾼 정도이지만:
+AKS에서는 Deployment 설정에 다음과 같이 포함되어 있던 것입니다.
+```
+spec:
+  template:
+    spec:
+      containers:
+      - command:
+        - /bin/bash
+        - -ec
+        - npm start
+```
+
+### Build script
+
+빌드 스크립트도 조정했습니다.
 ```
 $ cat build.sh
 az acr login -n tuna01
@@ -28,8 +44,13 @@ if [ $? -ne 0 ]; then echo 'fail' && exit 1 ; fi
 docker push tuna01.azurecr.io/${NAME}:${VERSION}
 if [ $? -ne 0 ]; then echo 'fail' && exit 1 ; fi
 ```
+AKS 때와 비교하면 이름과 버전 바꾼 정도입니다.
 
-nodejs 소스도 건드려야 합니다. 컨테이너를 하나만 띄울 거기 때문에 초기화할 때 mongodb를 찾지 않도록 바꿔줍니다:
+### 프로그램 소스
+
+nodejs 소스도 건드려야 합니다.  
+AKS에서는 별 생각 없이 같이 뜬 mongodb를 방치했는데, 여기선 컨테이너 하나만 띄울 거라 nodejs가 초기화하면서 mongodb를 찾으면 에러납니다.
+
 ```
 //아래 부분들을 찾아 주석처리
 //__var mongoose = require('mongoose');                               // mongoose for mongodb
@@ -37,9 +58,9 @@ nodejs 소스도 건드려야 합니다. 컨테이너를 하나만 띄울 거기
 //__mongoose.connect(database.remoteUrl);                         // connect to local MongoDB instance. A remoteUrl is also available (modulus.io)
 ```
 
-만약 mongodb가 필요하다면 (저처럼 봇 접속에만 한정하지 않고 기존 소스의 로직을 적극 활용한다면) 소스를 건드리지 말고 다른 방향으로 셋업을 해주어야겠죠. 
-- mongodb 를 띄움
-- Dockerfile 을 수정해서 AKS에서 환경변수 설정한 것을 옮겨주기. 하나만 예로 들자면:
+만약 mongodb가 필요하다면 (즉 저처럼 봇 접속에만 한정하지 않고 기존 소스의 로직을 적극 활용한다면) 소스를 건드리지 말고 다른 방향으로 셋업을 해주어야겠죠. 
+- mongodb 를 따로 시동 (또다른 컨테이너로 띄우든 관리형 서비스로 띄우든)
+- Dockerfile 을 수정해서 AKS에서 환경변수 설정한 것을 옮기고 값 조정. 하나만 예로 들자면:
   ```
   ENV DATABASE_HOST mynode-mongodb
   ```
@@ -60,6 +81,8 @@ $ az container create -g rg-tuna -n ctr-tuna-03 --image tuna01.azurecr.io/node-c
 - 메시지는 "요청된 리소스를 지금은 'koreacentral' 위치에서 사용할 수 없습니다. 다른 리소스 요청으로 또는 다른 위치에서 다시 시도하세요. 요청된 리소스: '1' CPU '1.5'GB 메모리 'Linux' OS 가상 네트워크""
   라고만 나옵니다.
 
-처음엔 리소스 증가 신청을 해야 하나, 혹은 virtual network을 기존의 것을 쓰면 안되나, 등등 여러 모로 시행착오를 했는데 결국 공용 IP주소 선택으로 넘어갔으며 아직 정확한 원인을 모릅니다.
+처음엔 리소스 증가 신청을 해야 하나, 혹은 virtual network을 기존의 것을 쓰면 안되나, 등등 여러 모로 시행착오를 했는데  
+결국 공용 IP주소 선택으로 넘어갔습니다.  
+아직도 private address 선택시 안되는 정확한 원인을 모릅니다.
 
 
