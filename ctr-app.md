@@ -94,7 +94,7 @@ $ az container create -g rg-tuna -n ctr-tuna-01 --image tuna01.azurecr.io/node-c
     --ip-address Private --ports 3000 --environment-variables 'PORT'='3000'
 UnknownError: The requested resource is not available in the location 'koreacentral' at this moment. Please retry with a different resource request or in another location. Resource requested: '1' CPU '1.5' GB memory 'Linux' OS virtual network
 ```
-
+뭔가 지역적인 문제가 아닌가도 의심이 드는 링크 : https://docs.microsoft.com/en-us/answers/questions/31325/azure-container-instances-vnet-error.html
 
 
 
