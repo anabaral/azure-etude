@@ -85,4 +85,62 @@ $ az container create -g rg-tuna -n ctr-tuna-03 --image tuna01.azurecr.io/node-c
 결국 공용 IP주소 선택으로 넘어갔습니다.  
 아직도 private address 선택시 안되는 정확한 원인을 모릅니다.
 
+## Troubleshooting
+
+### 컨테이너 생성 시 만들어졌던 가상네트워크 지우기
+
+앞에서 컨테이너 인스턴스를 만들 때 IP address 를 private 로 하려 시도했었는데 그 때 가상 네트워크(Virtual Network)과 서브넷(Subnet)을 생성해야 했습니다.  
+문제는 이걸 삭제하려고 하니 자꾸 이상한 에러가 나면서 삭제가 안됩니다.
+* 처음에 웹 콘솔에서 서브넷 속성을 변경하려 할 때 나던 에러:
+  ```
+  서브넷 sub-ctr-tuna-01이(가) 사용 중이므로 업데이트될 수 없습니다.
+  ```
+* 아예 서브넷을 삭제하려 할 때 나던 에러:
+  ```
+  Subnet sub-ctr-tuna-01 is in use by /subscriptions/ca36f0eb-8274-4e37-a0ed-f78461bad6d2/resourceGroups/rg-tuna/providers/Microsoft.Network/networkProfiles/ctr-tuna-01-networkProfile/containerNetworkInterfaceConfigurations/eth0/ipConfigurations/ipconfigprofile1 
+  and cannot be deleted. In order to delete the subnet, delete all the resources within the subnet. 
+  See aka.ms/deletesubnet.
+  ```
+  ...네트워크 프로필이 어떻다고?
+* 가상 네트워크 째로 없애려 해도 비슷한 에러가 뜸:
+  ```
+  Subnet sub-ctr-tuna-01 is in use by /subscriptions/ca36f0eb-8274-4e37-a0ed-f78461bad6d2/resourceGroups/rg-tuna/providers/Microsoft.Network/networkProfiles/ctr-tuna-01-networkProfile/containerNetworkInterfaceConfigurations/eth0/ipConfigurations/ipconfigprofile1 
+  and cannot be deleted. In order to delete the subnet, delete all the resources within the subnet. 
+  See aka.ms/deletesubnet.
+  ```
+  명령줄에서 실행해도 비슷.
+
+구글신에게 물어보니, 똑같이 네트워크 프로필을 지워야 한다고 한다. 다만 답해준 사람이 친절하게도 방법을 대략 알려줬습니다.
+```
+$ az network profile list -g rg-tuna -o table   # 그런 게 있다는 걸 확인!
+Location      Name                        ProvisioningState    ResourceGroup    ResourceGuid
+------------  --------------------------  -------------------  ---------------  ------------------------------------
+koreacentral  ctr-tuna-01-networkProfile  Succeeded            rg-tuna          aa2dd796-7649-42be-b171-11628e028360
+koreacentral  ctr-tuna-1-networkProfile   Succeeded            rg-tuna          c9f9dc74-276a-493c-a9f8-a0ec1cbbbb91
+koreacentral  xxx-networkProfile          Succeeded            rg-tuna          09546f7f-be27-4f09-83f3-a6536183dd76
+```
+
+이것들이 뭔지는 잘 모르겠으나, 이름의 접두사 'ctr-tuna-01', 'ctr-tuna-1', 'xxx' 들은 
+컨테이너 인스턴스 생성 중에 만들었던 vnet 들의 이름입니다. 아무튼 지금은 쓰지도 않고 필요없으니 다 지워버리기로.
+
+```
+$ az network profile delete -g rg-tuna -n xxx-networkProfile
+Are you sure you want to perform this operation? (y/n): y
+$ az network profile delete -g rg-tuna -n ctr-tuna-1-networkProfile
+Are you sure you want to perform this operation? (y/n): y
+$ az network profile delete -g rg-tuna -n ctr-tuna-01-networkProfile
+Are you sure you want to perform this operation? (y/n): y
+```
+
+이제 시원하게 다 날려버립시다:
+```
+$ az network vnet list -o table
+Name               ResourceGroup                     Location      NumSubnets    Prefixes                          DnsServers    DDOSProtection    VMProtection
+-----------------  --------------------------------  ------------  ------------  --------------------------------  ------------  ----------------  --------------
+aks-vnet-11324664  MC_rg-tuna_aks-tuna_koreacentral  koreacentral  1             10.0.0.0/8                                      False             False
+vn-ctr-tuna        rg-tuna                           koreacentral  1             192.168.128.0/18, 192.169.0.0/16                False             False
+vn-tuna            rg-tuna                           koreacentral  2             192.168.0.0/16, 100.64.0.0/16                   False             False
+$ az network vnet delete -g rg-tuna -n vn-ctr-tuna
+...이하반복
+```
 
