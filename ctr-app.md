@@ -110,7 +110,7 @@ $ az container create -g rg-tuna -n ctr-tuna-03 --image tuna01.azurecr.io/node-c
   ```
   명령줄에서 실행해도 비슷.
 
-구글신에게 물어보니, 똑같이 네트워크 프로필을 지워야 한다고 한다. 다만 답해준 사람이 친절하게도 방법을 대략 알려줬습니다.
+구글신에게 물어보니, 똑같이 네트워크 프로필을 지워야 한다고 합니다. 다만 답해준 사람이 친절하게도 방법을 대략 알려줬습니다.
 ```
 $ az network profile list -g rg-tuna -o table   # 그런 게 있다는 걸 확인!
 Location      Name                        ProvisioningState    ResourceGroup    ResourceGuid
@@ -141,6 +141,5 @@ aks-vnet-11324664  MC_rg-tuna_aks-tuna_koreacentral  koreacentral  1            
 vn-ctr-tuna        rg-tuna                           koreacentral  1             192.168.128.0/18, 192.169.0.0/16                False             False
 vn-tuna            rg-tuna                           koreacentral  2             192.168.0.0/16, 100.64.0.0/16                   False             False
 $ az network vnet delete -g rg-tuna -n vn-ctr-tuna
-...이하반복
 ```
-
+다른 것들은 아직 쓰는 거니 지우지 말도록 주의합니다.
