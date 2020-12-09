@@ -85,6 +85,19 @@ $ az container create -g rg-tuna -n ctr-tuna-03 --image tuna01.azurecr.io/node-c
 결국 공용 IP주소 선택으로 넘어갔습니다.  
 아직도 private address 선택시 안되는 정확한 원인을 모릅니다.
 
+말끔하게 지우고 CLI로 다시 시도해 봤는데 역시 에러가 납니다:
+```
+$ az network vnet create -g rg-tuna -n vn-ctr-tuna-01 --address-prefix 10.168.0.0/16 \
+    --subnet-name sub-ctr-tuna-01 --subnet-prefix 10.168.0.0/24
+$ az container create -g rg-tuna -n ctr-tuna-01 --image tuna01.azurecr.io/node-ctr:0.1  \
+    --location koreacentral --vnet vn-ctr-tuna-01 --subnet sub-ctr-tuna-01 \
+    --ip-address Private --ports 3000 --environment-variables 'PORT'='3000'
+UnknownError: The requested resource is not available in the location 'koreacentral' at this moment. Please retry with a different resource request or in another location. Resource requested: '1' CPU '1.5' GB memory 'Linux' OS virtual network
+```
+
+
+
+
 ## Troubleshooting
 
 ### 컨테이너 생성 시 만들어졌던 가상네트워크 지우기
