@@ -34,7 +34,7 @@ C:\Users\rindon>az extension add --name automation
 The installed extension 'automation' is experimental and not covered by customer support. Please use with discretion.
 ```
 
-portal.azure.com 화면에서 만들어 둔 자동계정이 있으므로 이걸 확인해 보자.
+자동계정을 create하는 명령이 있긴 한데 내겐 이미 portal.azure.com 화면에서 만들어 둔 자동계정이 있으므로 이걸 확인해 보자.
 ```
 C:\Users\rindon>az automation account list -o table
 Command group 'automation account' is experimental and under development. Reference and support levels: https://aka.ms/CLI_refstatus
@@ -43,6 +43,7 @@ CreationTime                      LastModifiedTime                  Location    
 2021-02-10T04:48:05.776666+00:00  2021-02-16T15:35:25.200000+00:00  koreacentral  auto-04226  04226
 ```
 
+현재는 Runbook을 CLI에서 어떻게 추가하는 지 모르겠음. 명령이 없는 것 같기도 함.  
 자동계정에 등록되어 있는 (import 해 둔) Runbook들을 확인해 보자.
 ```
 C:\Users\rindon>az automation runbook list --automation-account-name auto-04226 -g 04226 -o table
