@@ -170,8 +170,43 @@ python 샘플을 보여주는 곳이 있음
 - 여기 소스를 통해 기본적인 동작을 시험해 볼 수 있는데
 - 문제는 이러함.
   * automation account 생성 잘 되고, runbook 생성 잘 되고, schedule 생성 잘 되는데
-  * runbook과 schedule을 연결하는 코드가 아무리 찾아봐도 없음.
-  * *이건 az CLI 에도 없음. 오직 Azure Powershell 에서만 Register-AzAutomationScheduledRunbook 라는 명령이 존재할 뿐임.*
+  * runbook과 schedule을 연결하는 코드가 잘 안찾아짐.
+    - az CLI 에도 없으며 공식문서에선 오직 Azure Powershell 에서만 Register-AzAutomationScheduledRunbook 라는 명령이 존재할 뿐임.
+    - 한참 고생한 끝에... 명칭이 좀 다르긴 하지만 찾아냈음.
+      ```
+      > python
+      >>> import os
+      >>> from azure.identity import DefaultAzureCredential
+      >>> SUBSCRIPTION_ID = "3ac347d8-a75f-4611-8ca8-161a69189283"
+      >>> GROUP_NAME = "04226"
+      >>> RUNBOOK = "StartAzureV2Vm"
+      >>> AUTOMATION_ACCOUNT = "auto-04226"
+      >>> from azure.mgmt.automation import AutomationClient
+      >>> automation_client = AutomationClient(
+      ...         credential=DefaultAzureCredential(),
+      ...         subscription_id=SUBSCRIPTION_ID
+      ...     )
+      >>> job_schedule_list = automation_client.job_schedule.list_by_automation_account(GROUP_NAME, AUTOMATION_ACCOUNT)
+      >>> for js in job_schedule_list:
+      ...   print(js)
+      ...
+      {'additional_properties': {}, 'id': '/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Automation/automationAccounts/auto-04226/jobSchedules/33eaf64c-75fa-464c-88b3-1838f6a9ae50', 'name': None, 'type': 'Microsoft.Automation/AutomationAccounts/JobSchedules', 'job_schedule_id': '33eaf64c-75fa-464c-88b3-1838f6a9ae50', 'schedule': <azure.mgmt.automation.models._models_py3.ScheduleAssociationProperty object at 0x00000223CB3E57C0>, 'runbook': <azure.mgmt.automation.models._models_py3.RunbookAssociationProperty object at 0x00000223CB3E5940>, 'run_on': '', 'parameters': None}
+      >>> js
+      <azure.mgmt.automation.models._models_py3.JobSchedule object at 0x00000223CB3E59A0>
+      >>> js.schedule
+      <azure.mgmt.automation.models._models_py3.ScheduleAssociationProperty object at 0x00000223CB3E57C0>
+      >>> js.schedule.name
+      'A'
+      >>> print(js.schedule)
+      {'additional_properties': {}, 'name': 'A'}
+      >>> schedule = automation_client.schedule.get(GROUP_NAME, AUTOMATION_ACCOUNT, "A")
+      >>> schedule
+      <azure.mgmt.automation.models._models_py3.Schedule object at 0x00000223CB3E5CA0>
+      >>> schedule.name
+      'A'
+      >>> print(schedule)
+      {'additional_properties': {}, 'id': '/subscriptions/3ac347d8-a75f-4611-8ca8-161a69189283/resourceGroups/04226/providers/Microsoft.Automation/automationAccounts/auto-04226/schedules/A', 'name': 'A', 'type': 'Microsoft.Automation/AutomationAccounts/Schedules', 'start_time': datetime.datetime(2021, 4, 9, 22, 26, tzinfo=<FixedOffset '+09:00'>), 'start_time_offset_minutes': 540.0, 'expiry_time': datetime.datetime(9999, 12, 31, 23, 59, tzinfo=<FixedOffset '+09:00'>), 'expiry_time_offset_minutes': 540.0, 'is_enabled': False, 'next_run': datetime.datetime(2021, 4, 14, 22, 26, tzinfo=<FixedOffset '+09:00'>), 'next_run_offset_minutes': 540.0, 'interval': 1, 'frequency': 'Day', 'time_zone': 'Asia/Seoul', 'advanced_schedule': None, 'creation_time': datetime.datetime(2021, 4, 8, 5, 17, 12, 983333, tzinfo=<FixedOffset '+00:00'>), 'last_modified_time': datetime.datetime(2021, 4, 9, 14, 3, 0, 570000, tzinfo=<FixedOffset '+00:00'>), 'description': ''}
+      ```
 python sdk 소스를 보여주는 곳도 있음
 - https://github.com/Azure/azure-sdk-for-python/blob/azure-mgmt-automation_1.0.0/sdk/automation/azure-mgmt-automation/azure/mgmt/automation
 - 위에 'runbook과 schedule을 연결하는 코드가 없음'이란 말은 여기까지 뒤져보고 얻은 결론임.
