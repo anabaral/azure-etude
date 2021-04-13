@@ -2,6 +2,8 @@
 
 회사에서 주어진 테스트 계정 가지고 한 번 해 보자.
 
+## CLI 에서의 초기 시도
+
 명령어 참조는 다음 링크 참조함:  
 https://docs.microsoft.com/en-us/cli/azure/ext/automation/automation/runbook?view=azure-cli-latest
 
@@ -161,4 +163,15 @@ CreationTime                      EndTime                           JobId       
 아 맞다. 내가 원하는 최종 모습은 이게 '스케줄' 되어야 한다는 것임.  
 그런데 아직 스케줄 하는 방법을 못찾음. CLI에서 제공을 안한 것인지 내가 못찾은 것인지 판단 안 되는 상황.
 
+## python 참조
 
+python 샘플을 보여주는 곳이 있음
+- https://github.com/Azure-Samples/azure-samples-python-management/blob/master/samples/automation
+- 여기 소스를 통해 기본적인 동작을 시험해 볼 수 있는데
+- 문제는 이러함.
+  * automation account 생성 잘 되고, runbook 생성 잘 되고, schedule 생성 잘 되는데
+  * runbook과 schedule을 연결하는 코드가 아무리 찾아봐도 없음.
+  * *이건 az CLI 에도 없음. 오직 Azure Powershell 에서만 Register-AzAutomationScheduledRunbook 라는 명령이 존재할 뿐임.*
+python sdk 소스를 보여주는 곳도 있음
+- https://github.com/Azure/azure-sdk-for-python/blob/azure-mgmt-automation_1.0.0/sdk/automation/azure-mgmt-automation/azure/mgmt/automation
+- 위에 'runbook과 schedule을 연결하는 코드가 없음'이란 말은 여기까지 뒤져보고 얻은 결론임.
