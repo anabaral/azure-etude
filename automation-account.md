@@ -209,4 +209,13 @@ python 샘플을 보여주는 곳이 있음
       ```
 python sdk 소스를 보여주는 곳도 있음
 - https://github.com/Azure/azure-sdk-for-python/blob/azure-mgmt-automation_1.0.0/sdk/automation/azure-mgmt-automation/azure/mgmt/automation
-- 위에 'runbook과 schedule을 연결하는 코드가 없음'이란 말은 여기까지 뒤져보고 얻은 결론임.
+
+위에까지 찾고서 전체 절차를 python으로 수행하는 방법을 파 보려고 했는데.. runbook부터 막힘.
+- runbook 을 그냥 빈껍데기로 만드는 건 예제가 있어 가능한데, 갤러리에서 갖고 온다거나 뭐가 되었든 내용이 있는 걸 만들려니 아무런 단서가 없음.
+- 예제가 될 만한 JSON을 찾고 있는데 잘 안 나옴.
+- 우선 다시 ```az cli``` 로 돌아와서, 웹 포털에서 export로 뽑아낸 기존 runbook을 다시 import하는 명령이 있길래 시도하는 것까지는 했음.
+  ```
+  C:\Users\rindon\Desktop>az automation runbook replace-content --automation-account-name "auto-04226" -g "04226" --name "StartAzureV2Vm" --content c:\Users\rindon\Downloads\StartAzureV2Vm.graphrunbook
+  ```
+  --> 실패.
+- content가 저걸 의미하는 게 아닌 
