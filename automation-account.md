@@ -217,8 +217,11 @@ python sdk 소스를 보여주는 곳도 있음
   * 주어진 계정에 automation account가 없으면 생성 - by python
   * 주어진 계정에 StartAzureV2Vm runbook이 없으면 생성 (초안이자 껍데기) - by python
     + REST API 호출에 필요한 auth token을 얻음.
+    + ```
+      access_token = credential.get_token("https://graph.microsoft.com/.default").token
+      ```
     + Replace Content API 호출.
-    + ``` curl -XPUT -H "Authorization: Bearer <auth token>" https://management.azure.com/subscriptions/<subscription_id>/resourceGroups/<group_name>/providers/Microsoft.Automation/automationAccounts/auto-04226/runbooks/<runbook_name>/draft/content?api-version=2015-10-31 --data @Downloads\StartAzureV2Vm.graphrunbook.json ```
+    + ``` curl -XPUT -H "Authorization: Bearer <access_token>" https://management.azure.com/subscriptions/<subscription_id>/resourceGroups/<group_name>/providers/Microsoft.Automation/automationAccounts/auto-04226/runbooks/<runbook_name>/draft/content?api-version=2015-10-31 --data @Downloads\StartAzureV2Vm.graphrunbook.json ```
     + 위의 호출 BODY는 ```{"runbookContent": "<exported_runbook_content_with_escaped_doublequotes>"}``` 로 만들면 됨.
   * 같은 방식으로 StopAzureV2Vm runbook도 필요하면 생성
   * schedule들을 생성하여 runbook에 연결
