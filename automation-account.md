@@ -270,6 +270,28 @@ REST API 보여주는 곳도 있음
         )
       ```
   * schedule들을 runbook에 연결
-    + 음... 어떻게?
+    +   ```
+        import uuid
+
+        js_id = uuid.uuid4()
+        RUNBOOK="StartAzureV2Vm"
+        
+        job_schedule = automation_client.job_schedule.create(
+            GROUP_NAME,
+            AUTOMATION_ACCOUNT,
+            js_id,
+            {
+              "schedule": {
+                "name": SCHEDULE
+              },
+              "runbook": {
+                "name": RUNBOOK
+              },
+              "parameters": {
+                "js1": "hello_world_js_1"
+              }
+            }
+        )
+        ```
   * runbook을 publish 함
 
