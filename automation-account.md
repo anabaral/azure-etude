@@ -224,7 +224,47 @@ python sdk 소스를 보여주는 곳도 있음
     + ``` curl -XPUT -H "Authorization: Bearer <access_token>" https://management.azure.com/subscriptions/<subscription_id>/resourceGroups/<group_name>/providers/Microsoft.Automation/automationAccounts/auto-04226/runbooks/<runbook_name>/draft/content?api-version=2015-10-31 --data @Downloads\StartAzureV2Vm.graphrunbook.json ```
     + 위의 호출 BODY는 ```{"runbookContent": "<exported_runbook_content_with_escaped_doublequotes>"}``` 로 만들면 됨.
   * 같은 방식으로 StopAzureV2Vm runbook도 필요하면 생성
-  * schedule들을 생성하여 runbook에 연결
+  * schedule들을 생성
+    + 예1 : 주 단위
+      ```
+      schedule = automation_client.schedule.create_or_update(
+            GROUP_NAME,
+            AUTOMATION_ACCOUNT,
+            SCHEDULE,
+            {
+              "name": SCHEDULE,
+              "description": "my description of schedule goes here",
+              "start_time": "2021-04-15T08:28:57.2494819Z",
+              "expiry_time": "2021-12-01T17:28:57.2494819Z",
+              "interval": "1",
+              "frequency": "Week",
+              "advancedSchedule": {
+                "weekDays": ["Monday","Tuesday"]
+              }
+            }
+        )
+      ```
+    + 예2 : 월 단위
+      ```
+        schedule = automation_client.schedule.create_or_update(
+            GROUP_NAME,
+            AUTOMATION_ACCOUNT,
+            SCHEDULE,
+            {
+              "name": SCHEDULE,
+              "description": "my description of schedule goes here",
+              "start_time": "2021-04-15T17:55:57+09:00",
+              "expiry_time": "2021-12-01T17:28:57+09:00",
+              "interval": "1",
+              "frequency": "Month",
+              "advancedSchedule": {
+                "monthDays": [1,2,15,29] # 1일, 2일, 5일, 29일
+              },
+              "timeZone": "Asia/Seoul"
+            }
+        )
+      ```
+  * schedule들을 runbook에 연결
     + 음... 어떻게?
   * runbook을 publish 함
 
