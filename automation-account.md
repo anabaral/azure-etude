@@ -210,6 +210,10 @@ python 샘플을 보여주는 곳이 있음
 python sdk 소스를 보여주는 곳도 있음
 - https://github.com/Azure/azure-sdk-for-python/blob/azure-mgmt-automation_1.0.0/sdk/automation/azure-mgmt-automation/azure/mgmt/automation
 
+REST API 보여주는 곳도 있음
+- https://docs.microsoft.com/ko-kr/rest/api/automation/
+- 한참 후에 알게 된 사실인데, python sdk를 이용할 때 조차 마지막에 보내는 파라미터는 REST API body 를 참조해서 만드는 게 좋음.
+
 위에까지 찾고서 전체 절차를 python으로 수행하는 방법을 파 보려고 했는데.. runbook부터 막힘.
 - runbook 을 그냥 빈껍데기로 만드는 건 예제가 있어 가능한데, 갤러리에서 갖고 온다거나 뭐가 되었든 내용이 있는 걸 만들려니 아무런 단서가 없음.
 - python 예제 찾는데는 2021-04-15 현재 실패.
@@ -223,6 +227,7 @@ python sdk 소스를 보여주는 곳도 있음
     + Replace Content API 호출.
     + ``` curl -XPUT -H "Authorization: Bearer <access_token>" https://management.azure.com/subscriptions/<subscription_id>/resourceGroups/<group_name>/providers/Microsoft.Automation/automationAccounts/auto-04226/runbooks/<runbook_name>/draft/content?api-version=2015-10-31 --data @Downloads\StartAzureV2Vm.graphrunbook.json ```
     + 위의 호출 BODY는 ```{"runbookContent": "<exported_runbook_content_with_escaped_doublequotes>"}``` 로 만들면 됨.
+  * *생성 다시 해 보자. 에러는 안 났는데 뭔가 실패한 듯 함.*
   * 같은 방식으로 StopAzureV2Vm runbook도 필요하면 생성
   * schedule들을 생성
     + 예1 : 주 단위
