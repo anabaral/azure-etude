@@ -212,10 +212,16 @@ python sdk 소스를 보여주는 곳도 있음
 
 위에까지 찾고서 전체 절차를 python으로 수행하는 방법을 파 보려고 했는데.. runbook부터 막힘.
 - runbook 을 그냥 빈껍데기로 만드는 건 예제가 있어 가능한데, 갤러리에서 갖고 온다거나 뭐가 되었든 내용이 있는 걸 만들려니 아무런 단서가 없음.
-- 예제가 될 만한 JSON을 찾고 있는데 잘 안 나옴.
-- 우선 다시 ```az cli``` 로 돌아와서, 웹 포털에서 export로 뽑아낸 기존 runbook을 다시 import하는 명령이 있길래 시도하는 것까지는 했음.
-  ```
-  C:\Users\rindon\Desktop>az automation runbook replace-content --automation-account-name "auto-04226" -g "04226" --name "StartAzureV2Vm" --content c:\Users\rindon\Downloads\StartAzureV2Vm.graphrunbook
-  ```
-  --> 실패.
-- content가 저걸 의미하는 게 아닌 
+- python 예제 찾는데는 2021-04-15 현재 실패.
+- 대신 REST API 병행하는 방식이 가능할 것 같음. 절차는 다음과 같음:
+  * 주어진 계정에 automation account가 없으면 생성 - by python
+  * 주어진 계정에 StartAzureV2Vm runbook이 없으면 생성 (초안이자 껍데기) - by python
+    + REST API 호출에 필요한 auth token을 얻음.
+    + Replace Content API 호출.
+    + ``` curl -XPUT -H "Authorization: Bearer <auth token>" https://management.azure.com/subscriptions/<subscription_id>/resourceGroups/<group_name>/providers/Microsoft.Automation/automationAccounts/auto-04226/runbooks/<runbook_name>/draft/content?api-version=2015-10-31 --data @Downloads\StartAzureV2Vm.graphrunbook.json ```
+    + 위의 호출 BODY는 ```{"runbookContent": "<exported_runbook_content_with_escaped_doublequotes>"}``` 로 만들면 됨.
+  * 같은 방식으로 StopAzureV2Vm runbook도 필요하면 생성
+  * schedule들을 생성하여 runbook에 연결
+    + 음... 어떻게?
+  * runbook을 publish 함
+
