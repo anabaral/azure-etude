@@ -288,7 +288,8 @@ REST API 보여주는 곳도 있음
                 "name": RUNBOOK
               },
               "parameters": {
-                "js1": "hello_world_js_1"
+                "RESOURCEGROUPNAME": "04226",
+                "VMNAME": "04226-test-vm"
               }
             }
         )
