@@ -296,5 +296,6 @@ REST API 보여주는 곳도 있음
         ```
   * runbook을 publish 함
   * 정해진 일정에 실행되기를 기다려 확인하면 결과를 볼 수 있음.
-    - ```04226-test-vm failed to start.  Error: ``` 같은 에러가 나던데, 실행은 됩니다.
+    - ```04226-test-vm failed to start.  Error: ``` 같은 에러가 나던데, 실행은 됩니다.  
+      (왜 에러가 나는지..? 타임아웃이 짧아서..?)
     - 주의: RESOURCEGROUPNAME 값을 "04226" 이라고 넣으면 위의 CLI 실행에서 발생했던 "숫자 4226으로 인식해서 찾지 못하는" 오류가 발생합니다.
