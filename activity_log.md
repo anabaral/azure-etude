@@ -5,6 +5,10 @@
 
 ## python 접근
 
+```
+> python -m pip install azure-mgmt-monitor
+```
+
 다음과 같이 접근해 보았음.
 
 ```
