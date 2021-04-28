@@ -274,6 +274,18 @@ aks-nodepool1-21253863-vmss000000   Ready    agent   15m   v1.16.13
 $ az aks show --resource-group 04226 --name myAKSCluster
 ```
 
+### storageclass 확인
+
+PersistentVolume이나 PersistentVolumeClaim 등을 이용할 수 있으려면 스토리지 사용이 가능해야 하는데 그 기본이 되는 리소스가 storageclass 임.
+다행스럽게도 이미 바로 쓸 수 있는 storageclass가 존재함
+```
+ds04226@Azure:~$ kubectl get sc
+NAME                PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+azurefile           kubernetes.io/azure-file   Delete          Immediate              true                   4m28s
+azurefile-premium   kubernetes.io/azure-file   Delete          Immediate              true                   4m28s
+default (default)   kubernetes.io/azure-disk   Delete          WaitForFirstConsumer   true                   4m28s
+managed-premium     kubernetes.io/azure-disk   Delete          WaitForFirstConsumer   true                   4m28s
+```
 
 ### 클러스터 업그레이드
 
