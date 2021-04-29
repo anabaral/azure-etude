@@ -24,8 +24,21 @@ server:
     size: 4Gi
     storageClass: "default"
 
-ds04226@Azure:~$ helm install prometheus prometheus-community/prometheus -n <namespace> -f prometheus-values.yaml
+ds04226@Azure:~$ helm install prometheus prometheus-community/prometheus -f prometheus-values.yaml
 ```
-네임스페이스를 지정하지 않아도 되며 그때는 기본 네임스페이스에 저장됨
+위에선 네임스페이스를 지정하지 않았는데 그러면 기본 네임스페이스에 저장됨 (AKS 셋업 직후라면 default)
+
+하지만 네임스페이스를 지정하는 게 낫겠지?
+
+```
+ds04226@Azure:~$ helm install prometheus    # 과감히 삭제.
+ds04226@Azure:~$ kubectl create namespace monitoring
+ds04226@Azure:~$ helm install prometheus prometheus-community/prometheus -n monitoring -f prometheus-values.yaml
+```
+
+다음을 체크해 보자:
+- PersistentVolume 생성된 것
+- PersistentVolumeClaim 생성된 것
+- Prometheus-Server Pod 의 deployment descriptor 에서 PV 와 PVC를 확인
 
 
