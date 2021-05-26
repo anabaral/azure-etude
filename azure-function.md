@@ -80,6 +80,13 @@
       - "Microsoft.ContainerService/managedClusters/stop"
       - "Microsoft.ContainerService/managedClusters/read"
     + 그런데 'Azure Kubernetes Service RBAC 클러스터 관리자' 역할의 경우, "Microsoft.ContainerService/managedClusters/*" 이 있는데 안됨. 뭐지?
+      - 이건 다음 명령으로 확인해 본 것임.
+        ```
+        > az role definition list > a.txt
+        > vi a.txt 
+        (직접 찾아보았음)
+        ```
+        이 명령으로 built-in role은 모두 확인 가능한데 안됨.
     + 아 그럼 사용자 지정 권한을 만들면 되지 않나? 싶었는데..  
       Premium 급으로 구독을 업그레이드 해야 함. ㅠ_ㅠ
 
