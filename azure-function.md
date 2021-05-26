@@ -63,7 +63,11 @@
       logging.info('Python_timer trigger function ran at %s', utc_timestamp)
 
   ```
-  * 코드에 권한 관련한 내용이 단촐한 것은 이 함수 앱에 바로 권한을 부여할 생각이기 때문.
+  * 로직은 단순함. 클러스터의 상태를 체크하여 'Stop' 상태가 아니면 Stop을 시도함.  
+    (아마 나중에 개선의 여지가 있을 것)
+  * 인증/권한에 권한 관련한 내용이 단촐한 것은 이 함수 앱 자체에 바로 권한을 부여할 생각이기 때문.  
+    이론상 identity에 권한을 부여하면 이 함수 앱 자체가 권한을 가지므로 `DefaultAzureCredentials()` 만으로 동작이 가능해져야 맞음.
+
 - 함수 앱에 권한 부여
   * (아직 성공 못했음)
   * azure portal 화면에서 해당 function app 으로 들어감
@@ -76,6 +80,6 @@
       - "Microsoft.ContainerService/managedClusters/stop"
       - "Microsoft.ContainerService/managedClusters/read"
     + 그런데 'Azure Kubernetes Service RBAC 클러스터 관리자' 역할의 경우, "Microsoft.ContainerService/managedClusters/*" 이 있는데 안됨. 뭐지?
-
+ 
 
 
