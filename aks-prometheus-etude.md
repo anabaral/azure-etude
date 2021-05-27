@@ -229,6 +229,21 @@ NNN.NNN.NNN.NNN
   >>> time.mktime(dt.timetuple())
   1622098800.0
   ```
+* 구간을 지정하는 쿼리의 예:
+  ```
+  # 한 시간 구간에 step=14 를 준 데이터 (prometheus UI 에서 한 시간 구간의 그래프를 그릴 때 호출된 URL)
+  ds04226@Azure:~$ curl --data-urlencode 'query=node_cpu_seconds_total{cpu="0",mode="idle"}' --data 'start=1622098689&end=1622102289&step=14' 'http://prometheus.sk-az.net/api/v1/query_range'
+  ...
+  
+  # 같은 한 시간에 step=1 을 주면 3601개의 데이터가 나옴. step=10을 주면 361개가 나올 것.
+  ds04226@Azure:~$ curl --data-urlencode 'query=node_cpu_seconds_total{cpu="0",mode="idle"}' --data 'start=1622098689&end=1622102289&step=1' 'http://prometheus.sk-az.net/api/v1/query_range' | jq '.data.result[0].values' | jq length
+    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                     Dload  Upload   Total   Spent    Left  Speed
+    100 82890    0 82784  100   106   301k    395 --:--:-- --:--:-- --:--:--  302k
+    3601
+  ```
+
+
 
 ## 메트릭들
 
