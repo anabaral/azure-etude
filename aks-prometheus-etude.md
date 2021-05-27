@@ -215,4 +215,29 @@ NNN.NNN.NNN.NNN
   ```
   * 쓸만하게 되려면 시각 혹은 시간 구간을 지정해야 하는데 그건 다음에...
 
+## 메트릭들
+
+메트릭은 exporter 를 호출하면 얻을 수 있는데, prometheus-server 도 그 자신이 exporter 역할을 한다. 즉
+`curl http://prometheus.sk-az.net/metrics ` 과 같이 호출해 보면 자신이 측정하는 메트릭을 응답으로 내보낸다.
+
+메트릭 목록을 얻고 싶다면 `curl http://prometheus.sk-az.net/api/v1/label/__name__/values` 를 호출하면 되는데 조금 더 다듬으면
+```
+ds04226@Azure:~$ cat prometheus-metrics-list.py
+#!/usr/bin/python
+import json
+import urllib.request
+
+hdr = {}
+request = urllib.request.Request('http://prometheus.sk-az.net/api/v1/label/__name__/values', headers = hdr)
+response = urllib.request.urlopen(request)
+json = json.load(response)
+if "status" in json and json["status"] == "success" :
+    for name in json["data"]:
+        print(name)
+
+ds04226@Azure:~$ python prometheus-metrics-list.py | wc -l
+797
+```
+797개나 되는 걸 어떻게 분석하지...?
+
 
