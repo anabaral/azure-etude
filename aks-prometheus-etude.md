@@ -174,12 +174,12 @@ NNN.NNN.NNN.NNN
 
 ## 사용
 
-* ingress까지 설정이 되면 다음과 같이 `http://prometheus.sk-az.net` 으로 (혹은 따로 정한 도메인명으로) 접속이 가능합니다. 
+* ingress까지 설정이 되면 다음과 같이 `http://prometheus.sk-az.net` 으로 (혹은 따로 정한 도메인명으로) 접속이 가능함.
   ![](https://github.com/anabaral/azure-etude/blob/master/img/prometheus-01.png)
-* 초기화면이 쿼리를 시험해 볼 수 있는 graph 화면입니다.
-* 가장 단순한 결과가 나오도록 쿼리를 실행한 예입니다:
+* 초기화면이 쿼리를 시험해 볼 수 있는 graph 화면이고
+* 가장 단순한 결과가 나오도록 쿼리를 실행한 예:
   ![](https://github.com/anabaral/azure-etude/blob/master/img/prometheus-02.png)
-* 이를 `curl` 로 재현하면 다음과 같이 나옵니다:
+* 이를 `curl` 로 재현하면 다음과 같이 나옴:
   ```
   $ curl --data-urlencode 'query=node_cpu_seconds_total{cpu="0",mode="idle"}' 'http://prometheus.sk-az.net/api/v1/query'  | jq
   {
@@ -213,14 +213,14 @@ NNN.NNN.NNN.NNN
     }
   }
   ```
-  위에서 value 는 <시각> 과 <값> 의 쌍으로 나옵니다.
+  위에서 value 는 <시각> 과 <값> 의 쌍으로 나옴.
 * 시각을 지정하는 쿼리의 예:
   ```
   ds04226@Azure:~$ curl --data-urlencode 'query=node_cpu_seconds_total{cpu="0",mode="idle"}' --data-urlencode 'time=1622098800' 'http://prometheus.sk-az.net/api/v1/query'
   {"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","app":"prometheus","app_kubernetes_io_managed_by":"Helm","chart":"prometheus-13.8.0","component":"node-exporter","cpu":"0","heritage":"Helm","instance":"10.240.0.4:9100","job":"kubernetes-service-endpoints","kubernetes_name":"prometheus-node-exporter","kubernetes_namespace":"monitoring","kubernetes_node":"aks-nodepool1-17385196-vmss000006","mode":"idle","release":"prometheus"},
   "value":[1622098800,"4723.51"]}]}}
   ```
-  여기서 시각은 `1622098800 = 2021-05-27T07:00:00Z` 를 의미하며, python 관점에서 변환은 다음과 같이 된다.
+  여기서 시각은 `1622098800 = 2021-05-27T07:00:00Z` 를 의미하며, python 관점에서 변환은 다음과 같이 됨.
   ```
   import datetime, time
   >>> dt = datetime.datetime.fromtimestamp(1622098800)
@@ -269,8 +269,8 @@ NNN.NNN.NNN.NNN
 
 ## 메트릭들
 
-메트릭은 exporter 를 호출하면 얻을 수 있는데, prometheus-server 도 그 자신이 exporter 역할을 한다. 즉
-`curl http://prometheus.sk-az.net/metrics ` 과 같이 호출해 보면 자신이 측정하는 메트릭을 응답으로 내보낸다.
+메트릭은 exporter 를 호출하면 얻을 수 있는데, prometheus-server 도 그 자신이 exporter 역할을 함. 즉
+`curl http://prometheus.sk-az.net/metrics ` 과 같이 호출해 보면 자신이 측정하는 메트릭을 응답으로 내보냄.
 
 메트릭 목록을 얻고 싶다면 `curl http://prometheus.sk-az.net/api/v1/label/__name__/values` 를 호출하면 되는데 조금 더 다듬으면
 ```
