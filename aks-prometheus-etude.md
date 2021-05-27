@@ -243,6 +243,28 @@ NNN.NNN.NNN.NNN
     3601
   ```
 
+* 메트릭 수집 대상 식별(이건 중요한 게 아닐 수도 있는데 혹시 몰라서) :
+  ```
+  # 활동 중인 타겟 수:
+  ds04226@Azure:~$ curl 'http://prometheus.sk-az.net/api/v1/targets' | jq '.data.activeTargets' | jq length
+    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                   Dload  Upload   Total   Spent    Left  Speed
+  100  375k    0  375k    0     0   933k      0 --:--:-- --:--:-- --:--:--  933k
+  7
+  
+  # url 로 풀어보는 활동 타겟들의 정체:
+  ds04226@Azure:~$ curl 'http://prometheus.sk-az.net/api/v1/targets' | jq '.data.activeTargets' | grep globalUrl
+    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                   Dload  Upload   Total   Spent    Left  Speed
+  100  375k    0  375k    0     0   920k      0 --:--:-- --:--:-- --:--:--  920k
+      "globalUrl": "https://20.39.191.41:443/metrics",
+      "globalUrl": "https://kubernetes.default.svc:443/api/v1/nodes/aks-nodepool1-17385196-vmss000006/proxy/metrics",
+      "globalUrl": "https://kubernetes.default.svc:443/api/v1/nodes/aks-nodepool1-17385196-vmss000006/proxy/metrics/cadvisor",
+      "globalUrl": "http://10.240.0.4:9100/metrics",
+      "globalUrl": "http://10.244.0.10:8080/metrics",
+      "globalUrl": "http://prometheus-server-d9fb67455-ldz7m:9090/metrics",
+      "globalUrl": "http://prometheus-pushgateway.monitoring.svc:9091/metrics",
+  ```
 
 
 ## 메트릭들
@@ -268,6 +290,8 @@ if "status" in json and json["status"] == "success" :
 ds04226@Azure:~$ python prometheus-metrics-list.py | wc -l
 797
 ```
-797개나 되는 걸 어떻게 분석하지...?
+
+근데 797개나 되는 걸 어떻게 분석하지...?
+* 일단 cAdvisor에서 주는 메트릭들은 여기서 설명되고 있음: https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md
 
 
