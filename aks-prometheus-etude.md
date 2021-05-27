@@ -213,7 +213,22 @@ NNN.NNN.NNN.NNN
     }
   }
   ```
-  * 쓸만하게 되려면 시각 혹은 시간 구간을 지정해야 하는데 그건 다음에...
+  위에서 value 는 <시각> 과 <값> 의 쌍으로 나옵니다.
+* 시각을 지정하는 쿼리의 예:
+  ```
+  ds04226@Azure:~$ curl --data-urlencode 'query=node_cpu_seconds_total{cpu="0",mode="idle"}' --data-urlencode 'time=1622098800' 'http://prometheus.sk-az.net/api/v1/query'
+  {"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","app":"prometheus","app_kubernetes_io_managed_by":"Helm","chart":"prometheus-13.8.0","component":"node-exporter","cpu":"0","heritage":"Helm","instance":"10.240.0.4:9100","job":"kubernetes-service-endpoints","kubernetes_name":"prometheus-node-exporter","kubernetes_namespace":"monitoring","kubernetes_node":"aks-nodepool1-17385196-vmss000006","mode":"idle","release":"prometheus"},
+  "value":[1622098800,"4723.51"]}]}}
+  ```
+  여기서 시각은 `1622098800 = 2021-05-27T07:00:00Z` 를 의미하며, python 관점에서 변환은 다음과 같이 된다.
+  ```
+  import datetime, time
+  >>> dt = datetime.datetime.fromtimestamp(1622098800)
+  >>> dt
+  datetime.datetime(2021, 5, 27, 16, 0)
+  >>> time.mktime(dt.timetuple())
+  1622098800.0
+  ```
 
 ## 메트릭들
 
