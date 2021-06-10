@@ -239,6 +239,8 @@ keycloak-0              1/1     Terminating   0          128m   # Statefulset �
 keycloak-postgresql-0   1/1     Running       0          128m
 ```
 
+초기화면:  
+![초기화면](./img/keycloak-welcome.png)
 
 
 
