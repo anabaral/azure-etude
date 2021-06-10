@@ -214,8 +214,12 @@ spec:
   - hosts:                                          # 추가
     - cloudadaptor.sk-az.net                        # 추가
     secretName: sso-prd-tls                         # 추가
+
+
+$ kubectl apply -f keycloak-ing.yaml
 ```
 
+이걸로 아직 충분하진 않음. theme 도 셋업해야 하고..
 
 
 
