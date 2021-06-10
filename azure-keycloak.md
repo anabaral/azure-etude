@@ -245,5 +245,5 @@ keycloak-postgresql-0   1/1     Running       0          128m
 [Administration Console]을 클릭하면 들어가는데, 의외로 복병이 있음.
 ![에러화면](./img/keycloak_error_https.png)
 
-이거 어떻게 해결했었지...?
+이거 어떻게 해결했었지...? --> 대충 생각나는데, 아마 TLS 설정 하기 전에 콘솔에서 Origin인가를 조정해 줘야 했던 것 같음
 
