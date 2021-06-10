@@ -107,6 +107,7 @@ volumeBindingMode: Immediate
 $ kubectl create -f keycloak-sc.yaml
 ```
 
+** custom theme 을 사용할 때만 쓰세요.  
 themedir 생성
 ```
 $ vi keycloak-pvc.yaml
@@ -128,6 +129,7 @@ spec:
 $ kubectl create -f keycloak-pvc.yaml
 ```
 
+** extraVolumes 와 extraVolumeMounts 는 custom theme 을 사용할 경우에만 고려하세요.
 설치용 파일 
 ```
 $ keycloak-values-13.0.1.yaml
@@ -219,9 +221,23 @@ spec:
 $ kubectl apply -f keycloak-ing.yaml
 ```
 
-이걸로 아직 충분하진 않음. theme 도 셋업해야 하고..
-
-
+** custom theme 준비
+```
+$ kubectl exec -it -n sso keycloak-0  -- bash
+I have no name!@keycloak-0:/$ cd /opt/bitnami/keycloak/
+I have no name!@keycloak-0:/opt/bitnami/keycloak$ ls
+...  themes  themes_temp  ...
+I have no name!@keycloak-0:/opt/bitnami/keycloak$ cp -a themes/* themes_temp/
+I have no name!@keycloak-0:/opt/bitnami/keycloak$ exit
+$ kubectl edit sts -n sso keycloak
+        volumeMounts:
+        - mountPath: /opt/bitnami/keycloak/themes    # themes_temp 를 찾아서 기존의 themes 를 대체하도록 바꿈
+          name: theme
+$ kubectl get po -n sso
+NAME                    READY   STATUS        RESTARTS   AGE
+keycloak-0              1/1     Terminating   0          128m   # Statefulset 은 Deployment와 달리 원래 Pod가 다 종료되고 난 뒤에 뜹니다
+keycloak-postgresql-0   1/1     Running       0          128m
+```
 
 
 
