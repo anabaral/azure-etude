@@ -242,5 +242,8 @@ keycloak-postgresql-0   1/1     Running       0          128m
 초기화면:  
 ![초기화면](./img/keycloak-welcome.png)
 
+[Administration Console]을 클릭하면 들어가는데, 의외로 복병이 있음.
+![에러화면](./img/keycloak_error_https.png)
 
+이거 어떻게 해결했었지...?
 
