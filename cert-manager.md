@@ -1,5 +1,8 @@
 # Cert-Manager 설정
 
+Cert-Manager 설치는 helm 으로 하면 간단히 되니까 따로 설명을 하지 않겠습니다.  
+여기서는 내가 원하는 도메인에 신뢰받는 인증서를 어떻게 연결하는지만 다룹니다.
+
 지웠다 깔았다 시행착오를 반복하였기에 조금 잘못 설명하는 부분이 있을 수 있습니다.
 
 가장 이상적인 절차는 다음과 같습니다:
@@ -143,6 +146,12 @@ spec:
 
 위에 언급한 `CertificateRequest` 나 `Order` 같은 리소스에 문제가 생겼는지 점검도 필요합니다.  
 `Certificate` 리소스가 제대로 'issued' 상태에 이르렀는지 확인하고 나서 `Ingress` 를 맞게 수정하세요.
+
+아래는 잘 된 인증서의 사례입니다:  
+![성공사례](https://github.com/anabaral/azure-etude/blob/master/img/cert-with-tls-valid.png)
+
+이건 `Ingress` 설정에 뭔가 문제가 있을 때 나옵니다:  
+![fake_cert](https://github.com/anabaral/azure-etude/blob/master/img/cert-without-tls-wrong.png)
 
 
 
