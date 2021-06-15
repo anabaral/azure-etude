@@ -57,7 +57,7 @@ spec:
           class: nginx
 ```
 
-인터넷에서 찾은 Certificate 설정
+인터넷에서 찾은 Certificate 설정 (Optional ※)
 ```
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -87,6 +87,9 @@ Events:
 ```
 위에처럼 `The certificate has been successfully issued` 메시지를 보면 성공입니다.
 
+※ Certifiacte 는 미리 만들 필요 없습니다. (2021년 현재 최신 K8s 와 Cert-manager 기준입니다. 옛버전은 아닐 수도 있습니다)
+   2021-06-15 실수로 알아낸 것인데 Ingress 설정에서 tls 이름을 잘못 지정했더니 바로 Certificate 와 Secret이 생성되었습니다.
+   즉 ClusterIssuer 와 Ingress 를 제외한 어떤 것도 굳이 만들지 않아도 됩니다.
 
 이제 ingress 설정을 cert-manager에 맞게 수정합니다.
 ```
@@ -152,7 +155,6 @@ spec:
 
 이건 `Ingress` 설정에 뭔가 문제가 있을 때 나옵니다:  
 ![fake_cert](https://github.com/anabaral/azure-etude/blob/master/img/cert-without-tls-wrong.png)
-
 
 
 
