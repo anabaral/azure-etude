@@ -274,5 +274,17 @@ update realm_attribute set value = '' where realm_id = 'master' and name = 'fron
 또 생각해야 할 것이, 어이없게도 위의 frontend URL 설정과 ingress의 SSL 설정은 짝이 맞아야 하는데 둘 중 하나가 안되면 그것대로 이해할 수 없는 에러가 납니다.  
 그러므로 하나 고쳐 보고 '안되네?' 싶어 롤백하는 접근을 사용하면 영원히 못고치죠...
 
+이렇게 바꿔놓고 나면 다음 설정도 가능해집니다:
+![require-ssl설정](https://github.com/anabaral/azure-etude/blob/master/img/keycloak-require-ssl.png)  
+Require-SSL 설정은 `None`, `external only`, `all request` 선택이 가능한데 충분한 준비 없이 `all request` 를 선택하면 바로 어느 화면도 접속 못하고 
+새로 설치해야 하는 경험을 하게 됩니다..
+
+그나마 이걸 돌려놓는 방법은 역시 DB를 건드리는 것입니다.
+```
+## 앞서 설명한 것처럼 db에 접속함
+## 아래 SQL 실행
+bitnami_keycloak=> update realm set ssl_required='EXTERNAL' where id = 'master'   ;
+```
+들어가는 값은 여기 참조: https://www.keycloak.org/docs-api/7.0/javadocs/org/keycloak/common/enums/SslRequired.html
 
 
