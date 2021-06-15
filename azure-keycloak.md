@@ -245,5 +245,34 @@ keycloak-postgresql-0   1/1     Running       0          128m
 [Administration Console]을 클릭하면 들어가는데, 의외로 복병이 있음.
 ![에러화면](./img/keycloak_error_https.png)
 
-이거 어떻게 해결했었지...? --> 대충 생각나는데, 아마 TLS 설정 하기 전에 콘솔에서 Origin인가를 조정해 줘야 했던 것 같음
+이거 어떻게 해결했었지...? ~~대충 생각나는데, 아마 TLS 설정 하기 전에 콘솔에서 Origin인가를 조정해 줘야 했던 것 같음~~  
+외부 JS가 아니므로 Origin으로 해결하는 게 아니고.. `${AuthBaseURL}` 에 해당하는 값을 바꿔 줘야 하는데 그게 초기화면 URL인 Frontend URL 입니다.
+![frontend_url](https://github.com/anabaral/azure-etude/blob/master/img/keycloak-frontend-url.PNG)  
+이걸 잘못 입력하면 화면을 못들어가서 새로 설치해야 하는 불상사가 발생합니다...!  
+급한대로 다시 바꾸는 방법을 소개하면 다음과 같음:
+```
+## 2021-06 현재 최신본의 기본DB로 같이 설치되는 postgresql 기준
+## keycloak pod에 들어감 
+> kubectl exec -it -n sso keycloak-postgresql-0 -- bash
+## 여러 정보를 얻음. 특히 postgresql DB 접속 관련 정보
+...$ set
+## db에 붙음
+...$ psql -U bn_keycloak -d bitnami_keycloak
+Password for user bn_keycloak:
+## database 뭐있나
+bitnami_keycloak=> \list
+## table들 뭐있나
+bitnami_keycloak=> \dt
+# 렐름설정에 있음.
+update realm_attribute set value = '' where realm_id = 'master' and name = 'frontendUrl';
+```
+애석하게도 이렇게 바꿔준다고 바로 반영되지 않습니다. Pod 을 죽여 재시작을 해줘야 합니다. (오래 기다려야 해요)
+```
+> kubectl delete po -n sso keycloak-0
+```
+
+또 생각해야 할 것이, 어이없게도 위의 frontend URL 설정과 ingress의 SSL 설정은 짝이 맞아야 하는데 둘 중 하나가 안되면 그것대로 이해할 수 없는 에러가 납니다.  
+그러므로 하나 고쳐 보고 '안되네?' 싶어 롤백하는 접근을 사용하면 영원히 못고치죠...
+
+
 
