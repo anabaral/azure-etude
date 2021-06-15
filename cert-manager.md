@@ -87,9 +87,11 @@ Events:
 ```
 위에처럼 `The certificate has been successfully issued` 메시지를 보면 성공입니다.
 
-※ Certifiacte 는 미리 만들 필요 없습니다. (2021년 현재 최신 K8s 와 Cert-manager 기준입니다. 옛버전은 아닐 수도 있습니다)
+※ 2021년 6월 현재 최신 K8s 와 Cert-manager 기준으로 Certificate는 미리 만들 필요 없는것처럼 보이기도 합니다.
    2021-06-15 실수로 알아낸 것인데 Ingress 설정에서 tls 이름을 잘못 지정했더니 바로 Certificate 와 Secret이 생성되었습니다.
-   즉 ClusterIssuer 와 Ingress 를 제외한 어떤 것도 굳이 만들지 않아도 됩니다.
+   그러면 ClusterIssuer 와 Ingress 를 제외한 어떤 것도 굳이 만들지 않아도 되는 셈인데...  
+   실제로는 자동생성된 Certificate는 ClusterIssuer가 아니고 있지도 않은 Issuer를 찾습니다. (버그 같기도 함)  
+   우리는 ClusterIssuer를 만들었으므로 그냥 여기 쓰인 절차를 따르는 게 편합니다.
 
 이제 ingress 설정을 cert-manager에 맞게 수정합니다.
 ```
