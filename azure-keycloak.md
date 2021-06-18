@@ -287,12 +287,16 @@ bitnami_keycloak=> update realm set ssl_required='EXTERNAL' where id = 'master' 
 ```
 들어가는 값은 여기 참조: https://www.keycloak.org/docs-api/7.0/javadocs/org/keycloak/common/enums/SslRequired.html
 
-그 외 관련이 있는 지 확실하지 않지만 같이 바꿔준 값이 있습니다.
+사실 이 설정만으로 해결될 수도 있습니다.
 ```
 > kubectl get cm -n devops keycloak-env-vars -o yaml
 ...
   KEYCLOAK_PROXY_ADDRESS_FORWARDING: "false"   # --> "true" 로 바꾸라고 함
 ```
 참고로 이것은 설치 시점에 `proxyAddressForwarding` 으로 표현되는 파라미터이기도 합니다.  
-두 개의 서로 다른 클러스터에서 keycloak을 설치했는데, 하나는 이것을 바꾸지 않고도 설정 성공 한 반면, 다른 하나는 실패하다가 마지막에 이걸 바꾸고 정상작동 하였습니다.
+두 개의 서로 다른 클러스터에서 keycloak을 설치했는데
+- 하나는 이것을 바꾸지 않고 frontend URL 설정으로 해결하였고
+- 다른 하나는 (Master 아닌 엉뚱한 realm 설정을 바꾼 바람에 발견했는데) 이 설정을 바꿔서 정상작동 하였습니다.
+다만 이 설정이 무슨 역할을 하기에 이 문제가 해결되는 지는 아직 모릅니다.
+
 
