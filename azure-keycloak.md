@@ -300,3 +300,58 @@ bitnami_keycloak=> update realm set ssl_required='EXTERNAL' where id = 'master' 
 다만 이 설정이 무슨 역할을 하기에 이 문제가 해결되는 지는 아직 모릅니다.
 
 
+## 다른 설치
+
+위의 설치는 트러블슈팅 포함한 설명이고  
+여기서는 최단경로 설치방법으로 정리합니다.
+
+
+cert-manager 설치 및 설정이 되어 있다고 간주하고 진행합니다.
+```
+$ $ helm repo list | grep bitnami
+bitnami                 https://charts.bitnami.com/bitnami
+
+$ helm fetch bitnami/keycloak --version 3.0.4
+$ tar xfz keycloak-3.0.4.tgz
+$ mv keycloak keycloak-3.0.4         # 나중에 버전 구별하기 좋게
+$ cd keycloak
+$ mv values.yaml values-custom.yaml  # 변경부분 식별하기 좋게
+$ vi values-custom.yaml              # 다음을 찾아 수정
+auth:
+  adminUser: chatadmin
+  adminPassword: "ChatOps01!"
+  managementUser: default
+  managementPassword: "ChatOps01!"
+service:
+  type: ClusterIP    # 기본값은 LoadBalancer
+ingress:
+  enabled: true
+  certManager: true
+  hostname: keycloak.chatops.ga
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+  tls: true
+EOF
+
+$ helm install keycloak -n cicd -f values-custom.yaml .
+```
+HTTPS 설정까지 한번에 되어 있기 때문에 여기까지만 하면 접속할 때 빈화면(브라우저 콘솔엔 에러) 뜨는 현상이 납니다.
+이걸 강제로 조정해 보겠습니다:
+
+```
+$ kubectl exec -it -n cicd keycloak-postgresql-0 -- bash
+I have no name!@keycloak-postgresql-0:/$ env       # 비번 확인
+I have no name!@keycloak-postgresql-0:/$ psql -U bn_keycloak -d bitnami_keycloak
+Password for user bn_keycloak:
+psql (11.12)
+Type "help" for help.
+
+bitnami_keycloak=> insert into realm_attribute (realm_id, name, value) values ('master', 'frontendUrl', 'https://keycloak.chatops.ga/auth')
+INSERT
+bitnami_keycloak=> quit
+I have no name!@keycloak-postgresql-0:/$ exit
+$ kubectl delete po -n cicd keycloak-0          # DB변경이 반영되도록 keycloak 재시작
+```
+
+어느 정도 기다린 후 접속 시도.
+
