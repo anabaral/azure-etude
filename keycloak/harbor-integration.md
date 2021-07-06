@@ -12,7 +12,7 @@
    - web origins: https://harbor.chatops.ga/*
    - 참조: ![클라이언트추가](./img/harbor-keycloak-01.png)
 3. 같은 블레이드에서 Credentials 탭 선택
-   - Secret 값 갈무리
+   - Secret 값 갈무리 (아래 값을 캡처하고 다시 생성했으니 안심하세요)
    - ![시크릿](./img/harbor-keycloak-02.png)
 4. Client Scopes 블레이드 선택. 여기는 참조만 합니다. (대략 어느 정보들을 공유할 것인가의 목록이라고 보여집니다)
    ![클라이언트스코프](./img/harbor-keycloak-03.png)
