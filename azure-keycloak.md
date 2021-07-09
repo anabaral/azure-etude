@@ -340,15 +340,14 @@ HTTPS 설정까지 한번에 되어 있기 때문에 여기까지만 하면 접�
 
 ```
 $ kubectl exec -it -n cicd keycloak-postgresql-0 -- bash
-I have no name!@keycloak-postgresql-0:/$ env       # 비번 확인
+I have no name!@keycloak-postgresql-0:/$ echo $POSTGRES_PASSWORD       # 비번 확인
 I have no name!@keycloak-postgresql-0:/$ psql -U bn_keycloak -d bitnami_keycloak
 Password for user bn_keycloak:
 psql (11.12)
 Type "help" for help.
 
 bitnami_keycloak=> insert into realm_attribute (realm_id, name, value) values ('master', 'frontendUrl', 'https://keycloak.chatops.ga/auth')
-INSERT
-bitnami_keycloak=> quit
+bitnami_keycloak=> \q
 I have no name!@keycloak-postgresql-0:/$ exit
 $ kubectl delete po -n cicd keycloak-0          # DB변경이 반영되도록 keycloak 재시작
 ```
