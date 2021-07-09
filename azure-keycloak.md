@@ -346,7 +346,8 @@ Password for user bn_keycloak:
 psql (11.12)
 Type "help" for help.
 
-bitnami_keycloak=> insert into realm_attribute (realm_id, name, value) values ('master', 'frontendUrl', 'https://keycloak.chatops.ga/auth')
+bitnami_keycloak=> insert into realm_attribute (realm_id, name, value) values ('master', 'frontendUrl', 'https://keycloak.chatops.ga/auth');
+INSERT 0 1
 bitnami_keycloak=> \q
 I have no name!@keycloak-postgresql-0:/$ exit
 $ kubectl delete po -n cicd keycloak-0          # DB변경이 반영되도록 keycloak 재시작
