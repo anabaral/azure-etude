@@ -14,6 +14,8 @@
   Azure 기본 storageclass 들이 제공하는 스토리지는 엄밀히 말해 Linux/Unix 파일시스템이 아닌 것 같습니다.
   읽고 쓰는 건 얼추 되는데 무슨 퍼미션 같은 문제가 갑자기 튀어나와 우리 뇌를 휘젓습니다.
   아주 안되는 것도 아니고 다 되는 것도 아니고... 이런 것 가지고 수명을 단축시키지 마시길.
+  ![빡침](./img/sally-with-fury.png)
+
 
 (2022년쯤이면 혹시 나아질 지도 모르겠습니다)
 
@@ -338,6 +340,57 @@ podTemplate(label:label, serviceAccount: "jenkins-robot", namespace: "ca", runAs
 - `workspaceVolume` 설정의 `ca-workspace` PVC 가 저기 위에서 만들어 놓은 PVC입니다.
 - 소스 잘 보면 `credentialsId` 를 쓴 곳이 두 군데 있습니다. 앞서 만들어 놓은 credential 을 사용한 겁니다.
 - 다른 곳에서도 시행착오를 엄청 했는데.. 그것들은 인터넷으로부터 제대로 된 예제를 찾지 못한 탓이라.. 설명할 건 별로 없네요..
+
+
+### Role 에 대한 부연설명 
+
+![Jenkins가 사용하는 Kubernetes ServiceAccount 구조](./img/jenkins-sa-arch.svg)
+
+위에서 다 설명하지는 않았는데 실제 필요한 serviceAccount 는 하나 혹은 두 개입니다.
+- 첫 번째는 Jenkins-Agent 를 생성하고 정보조회하고 삭제하는 권한과 연결된 SA입니다.
+  * 이건 필수입니다. 
+- 두 번째는 Jenkins-Agent가 현재 deployment 나 statement, job 등을 제어하고자 할 때 필요한 SA(및 권한)입니다.
+  * 위의 스크립트에서 `serviceAccount: "jenkins-robot",` 라고 기술된 부분에서 지정하여 사용합니다.
+  * 만약 만드는 Jenkins Pipeline 스크립트 안에서 이미지 빌드 및 푸쉬까지만 행하고 
+    디플로이는 수작업으로 혹은 ArgoCD 같은 CD Tool에게 맡긴다면, 두 번째 SA는 필요 없습니다.
+    그럴 때는 그냥 첫번째 SA를 재사용하면 편합니다.
+  * 만약 만드는 Jenkins Pipeline 스크립트 안에서 어플리케이션 디플로이까지 하도록 하려면,
+    두 번째 SA를 (그리고 role, rolebinding)을 잘 설정해야 합니다.
+  * 심지어 스크립트에서 디플로이하려는 어플리케이션이 Jenkins와 다른 Namespace에 존재하는 것이면
+    그냥 role, rolebinding 이 아니라 clusterrole, clusterrolebinding 을 설정해야 합니다.
+
+
+### Git push 에 대한 부연설명
+
+위의 환경과 조금 다른 환경에서 (2021 ChatOps) pipeline설정을 해야 했었는데, 거기는 Jenkins가 설치된 네임스페이스와
+대상 어플리케이션의 네임스페이스가 달랐습니다 (이게 일반적이긴 하죠)  
+이런 환경에서는 jenkins agent 가 deploy까지 수행하려면 cluster role 권한을 부여받아야 하는데 그건 좀 부담스러워서
+대신 Deployment Descriptor 를 git에 올리고 argoCD에서 sync하는 전략을 택했습니다.
+그 관련해 성공한 코드를 참조삼아 올립니다:
+```
+      stage('Deploy'){
+        try {
+            sh "git config --global user.email 'anabaral@gmail.com'"
+            sh "git config --global user.name 'ChatAdmin'"
+            sh "sed -i 's#\\(image: harbor.chatops.ga/app/controller\\):[0-9]\\{8\\}_[0-9]\\{6\\}#\\1:${this_time}#' doc/deploy/ctr-deploy.yaml "
+          withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "Gitea", 
+                            usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASSWORD']]){
+            sh "git add ${deploy_file}"
+            sh "git commit -m 'auto image change by jenkins'"
+            sh "git remote set-url origin https://${GIT_USER}:${GIT_PASSWORD}@gitea.chatops.ga/selee/controller.git"
+            sh "git push origin HEAD:master"
+          }
+          //sh "kubectl set image -n app  deployment/controller controller=harbor.chatops.ga/app/controller:${this_time}"
+        }catch(Exception e){
+          echo e.toString()
+          throw e
+        }
+      }
+```
+분명히 이것보다 더 간결하고 깔끔한 코드가 있을텐데, 검색으로 찾는데 실패해서 시행착오를 거쳐 만든 것이라 나중에 개선할 여지가 있습니다.
+
+
+
 
 
 
