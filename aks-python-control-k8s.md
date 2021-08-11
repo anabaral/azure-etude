@@ -78,6 +78,6 @@ ret = api_client.list_namespaced_pod("app", watch=False)
 참조사이트: http://jason-heo.github.io/python/2020/12/19/kubernetes-python-api.html  
 
 
-
+좀더 많은 예제를 보고 싶다면 https://github.com/kubernetes-client/python
 
 
