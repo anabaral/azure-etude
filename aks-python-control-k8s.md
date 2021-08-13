@@ -128,7 +128,23 @@ for i in ret.items:
 >>> [x for x in api_client.list_namespaced_deployment('app').items if x.metadata.name == 'controller' ][0]
 ```
 
+그 외에.. Deployment의 스케일을 변경해 보려고 다음 시도를 했음:
+```
+>>> body = api_client.read_namespaced_replica_set_scale('controller-6746f5b4f9', 'app')
+>>> body.spec.replicas = 2
+>>> api_client.replace_namespaced_replica_set_scale('controller-6746f5b4f9', 'app', body)
+# 실패.
 
+>>> body = api_client.read_namespaced_replica_set('controller-6746f5b4f9', 'app')
+>>> body.spec.replicas=2
+>>> api_client.replace_namespaced_replica_set('controller-6746f5b4f9', 'app', body)
+# 실패.
+
+>>> body = api_client.read_namespaced_deployment('controller', 'app')
+>>> body.spec.replicas = 2
+>>> api_client.replace_namespaced_deployment('controller', 'app', body)
+# 성공.
+```
 
 
 
