@@ -1,12 +1,19 @@
 # Python 으로 kubernetes 제어하기
 
+## Controller 아키텍처
+
+간단한 Controller를 만들어 kubernetes 클러스터 안에 띄워 같은 클러스터 내의 리소스를 제어하게 하려 함.
+
+기본 아키텍처는 다음과 같음:
+![](./img/controller-arch.svg)
+
+
 ## 프로토타이핑
 
-항상 쉽게 시작하는 게 좋음.
+이 단계는 Controller 에 실행 로직을 넣기 전에 그 코드를 미리 테스트하는 단계임.
 
-python 에 kubernetes가 깔린 이미지를 구해서 Deployment든 StatefulSet으로든 띄워놓았다고 가정함. 
-그런게 있으면 다행이고 없으면 만들어야 함...
-어쨌든 여기선 그게 있다고 가정하고 다음과 같이 확인한다.
+위의 아키텍처대로 이미지를 만들고 이를 Deployment나 StatefulSet으로 띄운 상태에서 실행하면 되는데 
+여기서는 Deployment로 띄웠다고 가정함.
 ```
 $ kubectl get po -n app | findstr controller
 controller-6746f5b4f9-zp6cr   1/1     Running   0          4m30s
