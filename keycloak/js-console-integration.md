@@ -25,6 +25,7 @@ https://github.com/anabaral/mta-js-console  여기 링크를 참조합니다.
     
 참조할 만한 사이트: https://bakery-it.tistory.com/43
 - 여기 읽어보면 keycloak.js 를 사용하는 클라이언트는 secret을 사용할 수 없다고 나와 있음...!!
+  (secret 대신 code(authorization_code) 와 code_verifier 를 보냄)
 - 그래서 keycloak에서 access type을 public으로 맞추지 않는 한 로그인 불가.
   ![](./img/keycloak-client-acceesstype.png)
 - 그렇다고 access type을 public으로 맞추면 이번엔 CORS 문제가 나옴. 이건 Web Origins 에 입력하는 URL이 '/' 로 끝나면 나는 문제. 없애야 함.  
