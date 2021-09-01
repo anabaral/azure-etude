@@ -32,4 +32,14 @@ https://github.com/anabaral/mta-js-console  여기 링크를 참조합니다.
   ![](./img/keycloak-weborigins.png)
 - access type = 'public' 으로 일단 절반의 성공.
 
+- access type = 'confidential' 일 경우 
+- 일단 keycloak.js를 사용하는 접근은 불가.
+- keycloak에서 Service Accounts Enabled: On  으로 켜야 함.
+- POSTMAN으로 직접 토큰을 얻어오는 걸 실험해봄. 파라미터는
+  * grant_type : client_credentials
+  * client_id
+  * client_secret
+  * 이렇게만 보내면 access_token 값을 포함하는 json response를 응답으로 보냄. (1시간 만료 토큰이자 Bearer 토큰)
+
+
 
