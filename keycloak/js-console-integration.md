@@ -20,7 +20,9 @@ https://github.com/anabaral/mta-js-console  여기 링크를 참조합니다.
   * client_secret 에 해당하는 정보를 보내지 않습니다. 
   * keycloak 서버는 그것 때문에 401 Error를 응답합니다.
   * keycloak.js 는 ( https://github.com/keycloak/keycloak/blob/master/adapters/oidc/js/src/main/resources/keycloak.js )  
-    딱히 그걸 버그라고 간주하지 않는 것 같습니다만, 예전엔 어떻게 썼었는 지 모르겠네요
+    히스토리 등을 봐선 딱히 그걸 버그라고 간주하지 않는 것 같습니다만, 예전엔 어떻게 썼었는 지 모르겠네요
 
     
-
+참조할 만한 사이트: https://bakery-it.tistory.com/43
+- 여기 읽어보면 keycloak.js 를 사용하는 클라이언트는 secret을 사용할 수 없다고 나와 있음...!!
+- 
