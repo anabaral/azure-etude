@@ -7,6 +7,10 @@
 - keycloak측에서 제공하는 자바스크립트 (keycloak.js) 를 사용
   * 대략 HTML에서
     ```
+    <script type="text/javascript" src="https://{my-keycloak-site}/auth/js/keycloak.js"></script>
+    ```
+    이렇게 자바스크립트를 제공받은 후 다음 코드를 실행하면 로그인 화면으로 넘어갔다 오면서 인증 획득
+    ```
       var login = {};
       var kc = Keycloak();
       var initOptions = {
