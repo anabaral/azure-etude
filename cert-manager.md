@@ -125,6 +125,8 @@ spec:
 
 ## 시행착오 기록
 
+### ClusterIssuer 시행착오
+
 ClusterIssuer가 staging용이 있기에 이걸 먼저 시도했었습니다.  
 시도할 거면 도메인 이름이라도 시험적인 이름을 써야 했는데...
 ```
@@ -157,6 +159,69 @@ spec:
 
 이건 `Ingress` 설정에 뭔가 문제가 있을 때 나옵니다:  
 ![fake_cert](https://github.com/anabaral/azure-etude/blob/master/img/cert-without-tls-wrong.png)
+
+
+### 도메인 만료
+
+jenkins 접속할 때 다음과 같은 오류를 만나게 됩니다:
+![도메인 만료 현상](./img/certmanager-domain-expired-01.png)
+
+이 문제를 클러스터 안에서 확인해 봅니다
+```
+ds04226@Azure:~$ kubectl get cert -n ca
+NAME          READY   SECRET        AGE
+ca-prd-tls    True    ca-prd-tls    131d
+jenkins-tls   False   jenkins-tls   90d
+rs-prd-tls    True    rs-prd-tls    69d
+
+ds04226@Azure:~$ kubectl describe cert -n ca jenkins-tls
+Name:         jenkins-tls
+Namespace:    ca
+...
+Spec:
+  Dns Names:
+    jenkins.sk-sz.net
+  Issuer Ref:
+    Group:      cert-manager.io
+    Kind:       ClusterIssuer
+    Name:       letsencrypt-prod
+  Secret Name:  jenkins-tls
+  Usages:
+    digital signature
+    key encipherment
+Status:
+  Conditions:
+    Last Transition Time:        2021-07-20T08:58:52Z
+    Message:                     Existing issued Secret is not up to date for spec: [spec.commonName spec.dnsNames]
+    Observed Generation:         1
+    Reason:                      SecretMismatch
+    Status:                      False
+    Type:                        Ready
+    Last Transition Time:        2021-07-20T08:58:52Z
+    Message:                     Existing issued Secret is not up to date for spec: [spec.commonName spec.dnsNames]
+    Observed Generation:         1
+    Reason:                      SecretMismatch
+    Status:                      True
+    Type:                        Issuing
+  Next Private Key Secret Name:  jenkins-tls-tnl9f
+  Not After:                     2021-10-18T01:27:05Z
+  Not Before:                    2021-07-20T01:27:07Z
+  Renewal Time:                  2021-09-18T01:27:05Z
+Events:                          <none>
+```
+
+어? cert-manager가 알아서 해 주는 거 아니었나?
+
+... 약간의 시행착오를 거쳐 알아낸 사실은, Ingress 에 등록하는 Host 두 개 (rules 밑의 host 와 tls 밑의 hosts 항목) 중 하나가 잘못 기입되어 있었다는 점입니다.  
+다행인 것은 잘못 기입된 시점이 아마도 인증서 등록은 끝난 시점인 듯 한데, 덕분에 한동안 정상적으로 동작되었지만 cert-manager 가 갱신하는 시점에
+문제가 되었던 거죠.
+
+해결은 다음과 같이 진행했습니다.
+- ingress 의 오류를 수정
+- ingress에 명시되어 있는 tls 용 secret 을 삭제
+- secret이 새로 생성되면서 certificaterequest 도 정상적으로 등록성공하고 certificate 도 정상상태가 되었습니다.
+
+
 
 
 
