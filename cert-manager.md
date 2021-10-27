@@ -1,6 +1,7 @@
 # Cert-Manager 설정
 
 Cert-Manager 설치는 helm 으로 하면 간단히 되니까 따로 설명을 하지 않겠습니다.  
+- 단, 처음 설치라면 `installCRDs: true` 옵션만큼은 포함되어야 Custom Resource Definition이 제대로 설치됩니다.
 여기서는 내가 원하는 도메인에 신뢰받는 인증서를 어떻게 연결하는지만 다룹니다.
 
 지웠다 깔았다 시행착오를 반복하였기에 조금 잘못 설명하는 부분이 있을 수 있습니다.
