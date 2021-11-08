@@ -390,8 +390,72 @@ podTemplate(label:label, serviceAccount: "jenkins-robot", namespace: "ca", runAs
 분명히 이것보다 더 간결하고 깔끔한 코드가 있을텐데, 검색으로 찾는데 실패해서 시행착오를 거쳐 만든 것이라 나중에 개선할 여지가 있습니다.
 
 
+## Troubleshooting
 
+### plugin 문제
 
+이 케이스는 2021-10월 경 AWS EKS 환경에 Helm으로 설치했던 Jenkins에서 경험한 것입니다.
+
+플러그인을 업그레이드 하다가 문제가 생긴 건지 어느 순간 갑자기 이런 에러가 나는 케이스가 있습니다:
+
+```
+$ kubectl get po -n ca | grep "jenkins-0"
+jenkins-0                            0/2     Init:CrashLoopBackOff   4          3m41s
+
+$ kubectl logs -n ca jenkins-0 -c init --tail=30
+...
+Will install new plugin branch-api 2.7.0
+Will install new plugin workflow-api 2.47
+io.jenkins.tools.pluginmanager.impl.AggregatePluginPrerequisitesNotMetException: Plugin prerequisite not met:
+Plugin workflow-aggregator:2.6 (via workflow-cps-global-lib:545.v7b28cce323cf) depends on workflow-api:2.47, but there is an older version defined on the top level - workflow-api:2.46
+        at io.jenkins.tools.pluginmanager.impl.PluginManager.start(PluginManager.java:218)
+        at io.jenkins.tools.pluginmanager.impl.PluginManager.start(PluginManager.java:167)
+        at io.jenkins.tools.pluginmanager.cli.Main.main(Main.java:70)
+        Suppressed: io.jenkins.tools.pluginmanager.impl.PluginDependencyException: Plugin workflow-aggregator:2.6 (via workflow-cps-global-lib:545.v7b28cce323cf) depends on workflow-api:2.47, but there is an older version defined on the top level - workflow-api:2.46
+                at io.jenkins.tools.pluginmanager.impl.PluginManager.resolveRecursiveDependencies(PluginManager.java:1070)
+                at io.jenkins.tools.pluginmanager.impl.PluginManager.findPluginsAndDependencies(PluginManager.java:645)
+                at io.jenkins.tools.pluginmanager.impl.PluginManager.start(PluginManager.java:210)
+                ... 2 more
+Plugin prerequisite not met:
+Plugin workflow-aggregator:2.6 (via workflow-cps-global-lib:545.v7b28cce323cf) depends on workflow-api:2.47, but there is an older version defined on the top level - workflow-api:2.46
+
+```
+
+이걸 풀어보려고 임시 Pod를 생성하고 jenkins가 마운트 했던 PVC들을 같이 마운트 해서 비교도 해보고 고쳐도 보았는데 근원적인 해결은 되지 못했고
+
+결국 해결은 다음과 같이 했습니다:
+```
+$ kubectl edit cm -n ca jenkins
+apiVersion: v1
+data:
+...
+  plugins.txt: |-
+    kubernetes:1.30.1
+    workflow-aggregator:2.6
+    git:4.9.0
+    configuration-as-code:1.53
+    credentials:2.6.1
+    workflow-api:2.46    <----  이걸 2.47 로 바꿔주어 해결
+    workflow-job:2.41
+    github:1.33.1
+```
+
+jenkins가 조금 특이한 것이, 이 ConfigMap에서 지정해 준 플러그인들을 아예 StatefulSet 시작할 때 initContainer 에서 설치해버립니다.
+그 과정에서 의존성에 문제가 있으면 에러가 나는 겁니다. 
+
+지금 추정하기로는, 
+- 제가 Jenkins 콘솔을 통해 저 플러그인들 중 일부를 이미 업그레이드 했었는데, 
+- 업그레이드 결과는 /var/jenkins_home (PVC로 되어 있음) 에 파일로 설치되어 있지만
+- 저 plugins.txt 파일에 옛날 버전으로 설치하도록 되어 있으므로 둘이 충돌된 것 같습니다. 
+- 충돌사실은 Jenkins가 계속 떠 있을 때는 불거지지 않다가 모종의 이유로 
+  Jenkins가 재시작을 할 적에 initContainer 에서 설치 스크립트를 돌리면서 에러가 난 거지요.
+
+즉 플러그인 관리할 때 
+- 둘 중 한쪽에서만 관리하면 문제가 없으며, 
+- 제 생각에 plugins.txt 는 최초 설치할 때만 유효하므로 
+- 그 내용을 설치 후엔 지워놓는게 차라리 낫지 않을까 싶네요.
+
+그런데 Jenkins의 변경 속도를 볼 때 내년 쯤에는 또 개선이 되어 있지 않을까 싶습니다.
 
 
 
