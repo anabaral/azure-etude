@@ -36,4 +36,15 @@
 ![Non-MS DB들](./img/azure-databases.png)
 
 
+## VMSS 
+
+Azure에서 virtual machine scale set 은 다음과 같이 다양한 옵션으로 설정할 수 있습니다.
+
+![scale sets](./img/azure-vmss.gif)
+
+위 그림에는 3가지 옵션으로 크게 나뉘는데 세부 옵션도 꽤 많아 보입니다.
+
+AWS와 일관성을 맞추기 위해서는 min / default / max 방식으로만 맞추는 게 나을 거 같은데...
+
+
 
